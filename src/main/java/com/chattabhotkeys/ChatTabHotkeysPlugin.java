@@ -4,8 +4,10 @@ import com.chattabhotkeys.ChatTabs.ChatTab;
 import com.chattabhotkeys.ChatTabs.FilterOp;
 import com.google.inject.Provides;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +59,9 @@ public class ChatTabHotkeysPlugin extends Plugin
 	/** Which tab to re-open to when the close hotkey expands a collapsed chat. */
 	private ChatTab lastTab = ChatTab.ALL;
 
+	/** Last filter the cycle hotkey applied per tab (the game state isn't readable for all tabs). */
+	private final Map<ChatTab, FilterOp> cycledFilter = new EnumMap<>(ChatTab.class);
+
 	@Override
 	protected void startUp()
 	{
@@ -73,6 +78,7 @@ public class ChatTabHotkeysPlugin extends Plugin
 		register(config::showAll, () -> onFilterHotkey(FilterOp.SHOW_ALL));
 		register(config::showFriends, () -> onFilterHotkey(FilterOp.SHOW_FRIENDS));
 		register(config::showNone, () -> onFilterHotkey(FilterOp.SHOW_NONE));
+		register(config::cycleFilter, this::onCycleFilterHotkey);
 
 		register(config::clearHistory, this::onClearHistoryHotkey);
 	}
@@ -180,21 +186,44 @@ public class ChatTabHotkeysPlugin extends Plugin
 	private void onFilterHotkey(FilterOp op)
 	{
 		ChatTab tab = currentTab();
+		if (tab != null && tab.supportsFilters)
+		{
+			applyFilter(tab, op);
+		}
+	}
+
+	private void onCycleFilterHotkey()
+	{
+		ChatTab tab = currentTab();
 		if (tab == null || !tab.supportsFilters)
 		{
 			return;
 		}
+		// The game's current filter isn't readable for every tab, so cycle from what we last
+		// applied. Default so the first press lands on Show all.
+		FilterOp next = cycledFilter.getOrDefault(tab, FilterOp.SHOW_NONE).next();
+		if (applyFilter(tab, next))
+		{
+			cycledFilter.put(tab, next);
+		}
+	}
 
+	/**
+	 * Sets the tab's filter by replaying the matching right-click op on its button.
+	 * Returns false (no-op) when the tab doesn't offer that filter.
+	 */
+	private boolean applyFilter(ChatTab tab, FilterOp op)
+	{
 		Widget button = client.getWidget(tab.widgetId);
 		if (button == null)
 		{
-			return;
+			return false;
 		}
 
 		String[] actions = button.getActions();
 		if (actions == null)
 		{
-			return;
+			return false;
 		}
 
 		String want = op.label.toLowerCase(Locale.ROOT);
@@ -206,15 +235,16 @@ public class ChatTabHotkeysPlugin extends Plugin
 				continue;
 			}
 			// The op text can carry a coloured tab-name prefix (e.g. "<col=..>Trade:</col> Show none"),
-			// so match by suffix — none of the three labels is a suffix of another.
+			// so match by suffix. None of the three labels is a suffix of another.
 			if (Text.removeTags(action).toLowerCase(Locale.ROOT).endsWith(want))
 			{
 				// Widget ops are 1-based; getActions()[i] is op i+1.
 				replayWidgetOp(button, i + 1);
-				return;
+				return true;
 			}
 		}
 		// Tab doesn't offer this filter (e.g. Game/All): no-op.
+		return false;
 	}
 
 	private void onClearHistoryHotkey()

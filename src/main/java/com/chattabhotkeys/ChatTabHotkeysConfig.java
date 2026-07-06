@@ -147,6 +147,18 @@ public interface ChatTabHotkeysConfig extends Config
 		return Keybind.NOT_SET;
 	}
 
+	@ConfigItem(
+		keyName = "cycleFilter",
+		name = "Cycle filter",
+		description = "Cycle the currently-shown tab's filter: Show all, then Show friends, then Show none.",
+		position = 3,
+		section = filtersSection
+	)
+	default Keybind cycleFilter()
+	{
+		return Keybind.NOT_SET;
+	}
+
 	// ------------------------------------------------------------------
 	// Clear history (current tab)
 	// ------------------------------------------------------------------
@@ -154,7 +166,7 @@ public interface ChatTabHotkeysConfig extends Config
 		keyName = "clearHistory",
 		name = "Clear history",
 		description = "Clear the currently-shown tab's history.",
-		position = 3,
+		position = 4,
 		section = filtersSection
 	)
 	default Keybind clearHistory()

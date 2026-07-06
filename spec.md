@@ -34,7 +34,9 @@ Pressing a tab's hotkey, given `targetTab`:
 
 ### 3. Filter hotkeys — act on the **currently-viewed** tab
 `Show all`, `Show friends`, `Show none`. Each sets the current tab's filter, exactly like the
-right-click menu entry.
+right-click menu entry. A `Cycle filter` hotkey rotates the current tab through all → friends → none.
+Since the game's current filter isn't readable for every tab, the cycle tracks its own per-tab state
+(the first press lands on Show all) and doesn't detect mouse-set filter changes.
 
 ### 4. Clear history — one hotkey
 Clears the **currently-viewed** tab's history, like the right-click "Clear history" entry. Implemented
@@ -48,7 +50,7 @@ Settings panel, two always-visible `@ConfigSection`s:
 | Section | Items |
 | --- | --- |
 | **Tab hotkeys & close chat** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade (default `Ctrl+1..7`); `boolean closeOnRepeat` (default **true**); 1 × `Keybind` "Close chat" |
-| **Chat filters & clear history** | 3 × `Keybind` — Show all, Show friends, Show none; 1 × `Keybind` "Clear history" |
+| **Chat filters & clear history** | 3 × `Keybind` — Show all, Show friends, Show none; 1 × `Keybind` "Cycle filter"; 1 × `Keybind` "Clear history" |
 
 Both sections render expanded (no `closedByDefault`).
 

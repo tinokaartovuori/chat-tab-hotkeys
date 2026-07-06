@@ -96,5 +96,12 @@ final class ChatTabs
 		{
 			this.label = label;
 		}
+
+		/** Next filter in the cycle: all -> friends -> none -> all. */
+		FilterOp next()
+		{
+			FilterOp[] values = values();
+			return values[(ordinal() + 1) % values.length];
+		}
 	}
 }

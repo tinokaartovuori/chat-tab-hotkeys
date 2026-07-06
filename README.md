@@ -11,6 +11,7 @@ by clicking, with no automation and no overlays.
   chat. The "press again to close" behaviour can be turned off.
 - **Close chat**: toggles the chatbox and reopens to the last tab. Works in resizable mode only.
 - **Show all / friends / none**: sets the current tab's filter, exactly like the right-click menu.
+- **Cycle filter**: rotates the current tab through Show all, Show friends and Show none with one key.
 - **Clear history**: clears the current tab's messages. It does this directly, so no other plugin is
   needed.
 
