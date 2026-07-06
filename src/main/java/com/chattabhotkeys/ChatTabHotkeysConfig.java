@@ -281,4 +281,17 @@ public interface ChatTabHotkeysConfig extends Config
 	{
 		return Keybind.NOT_SET;
 	}
+
+	@ConfigItem(
+		keyName = "cycleMode",
+		name = "Cycle mode",
+		description = "Cycle the chat input mode: Public, then Channel, then Clan, then Guest clan. "
+			+ "Group is excluded from the cycle (use its own bind).",
+		position = 5,
+		section = modeSection
+	)
+	default Keybind cycleMode()
+	{
+		return Keybind.NOT_SET;
+	}
 }

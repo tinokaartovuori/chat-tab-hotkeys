@@ -89,11 +89,12 @@ public class ChatTabHotkeysPlugin extends Plugin
 
 		register(config::clearHistory, this::onClearHistoryHotkey);
 
-		register(config::setModePublic, () -> onChatModeHotkey(ChatMode.PUBLIC));
-		register(config::setModeChannel, () -> onChatModeHotkey(ChatMode.CHANNEL));
-		register(config::setModeClan, () -> onChatModeHotkey(ChatMode.CLAN));
-		register(config::setModeGuest, () -> onChatModeHotkey(ChatMode.GUEST));
-		register(config::setModeGroup, () -> onChatModeHotkey(ChatMode.GROUP));
+		register(config::setModePublic, () -> applyChatMode(ChatMode.PUBLIC));
+		register(config::setModeChannel, () -> applyChatMode(ChatMode.CHANNEL));
+		register(config::setModeClan, () -> applyChatMode(ChatMode.CLAN));
+		register(config::setModeGuest, () -> applyChatMode(ChatMode.GUEST));
+		register(config::setModeGroup, () -> applyChatMode(ChatMode.GROUP));
+		register(config::cycleMode, this::onCycleModeHotkey);
 	}
 
 	@Override
@@ -350,13 +351,41 @@ public class ChatTabHotkeysPlugin extends Plugin
 		}
 	}
 
-	private void onChatModeHotkey(ChatMode mode)
+	/**
+	 * Sets which channel typed messages go to, the game's own way: write the mode var and rerun the
+	 * chatbox-input build script so the input line redraws. Group (GIM) auto-resets to the current
+	 * mode if the player isn't in a group.
+	 */
+	private void applyChatMode(ChatMode mode)
 	{
-		// Set which channel typed messages go to, the game's own way: write the mode var and
-		// rerun the chatbox-input build script so the input line redraws with the new mode.
-		// Group (GIM) auto-resets to the current mode if the player isn't in a group.
 		client.setVarcIntValue(VarClientID.CHATBOX_MODE, mode.value);
 		client.runScript(ScriptID.CHAT_PROMPT_INIT);
+	}
+
+	private void onCycleModeHotkey()
+	{
+		// The mode var is readable, so advance from the actual current mode. Skip Group (it would
+		// self-reset when not in a GIM group and trap the cycle), wrapping Public->..->Guest->Public.
+		int current = client.getVarcIntValue(VarClientID.CHATBOX_MODE);
+		ChatMode[] modes = ChatMode.values();
+		int start = 0;
+		for (int i = 0; i < modes.length; i++)
+		{
+			if (modes[i].value == current)
+			{
+				start = i + 1;
+				break;
+			}
+		}
+		for (int offset = 0; offset < modes.length; offset++)
+		{
+			ChatMode mode = modes[(start + offset) % modes.length];
+			if (mode.cyclable)
+			{
+				applyChatMode(mode);
+				return;
+			}
+		}
 	}
 
 	// ----------------------------------------------------------------------

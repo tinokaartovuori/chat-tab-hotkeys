@@ -19,7 +19,7 @@ by clicking, with no automation and no overlays.
   needed.
 - **Chat input mode**: sets which channel you type into (Public, Channel, Clan, Guest clan, Group),
   the same as the right-click "Set chat mode" on the All tab. Group only works while you are in a group
-  ironman group.
+  ironman group. A **Cycle mode** key rotates through Public, Channel, Clan and Guest clan.
 
 Only the tab keys are bound out of the box. Bind the rest in the settings if you want them.
 

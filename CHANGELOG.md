@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cycle-filter hotkey that rotates the current tab through the options it offers (3 on most tabs,
   5 on the Public tab).
 - Public-tab filter hotkeys: Show autochat, Show standard, Hide.
-- Chat input mode hotkeys: set the channel you type into (Public, Channel, Clan, Guest clan, Group).
+- Chat input mode hotkeys: set the channel you type into (Public, Channel, Clan, Guest clan, Group),
+  plus a Cycle mode hotkey that rotates Public / Channel / Clan / Guest clan.
 - Native clear-history hotkey for the currently-viewed tab (no Chat History plugin dependency).
 - `closeOnRepeat` option: pressing a tab's hotkey again closes the chat.
 - Settings grouped into two always-visible sections: "Tab hotkeys & close chat" and

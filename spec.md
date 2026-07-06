@@ -45,7 +45,9 @@ Public). Since the game's current filter isn't readable, the cycle tracks its ow
 Hotkeys for `Public`, `Channel`, `Clan`, `Guest clan`, `Group`, matching the game's right-click
 "Set chat mode" on the All tab. Applied by writing the chat-mode client var and rerunning the
 chatbox-input build script. Group only takes effect while in a group ironman group (the game resets it
-otherwise).
+otherwise). A `Cycle mode` hotkey rotates Public → Channel → Clan → Guest clan (reading the current
+mode from the game). Group is excluded from the cycle because the game self-resets it when not in a
+group, which would trap the cycle; it remains available on its own bind.
 
 ### 4. Clear history — one hotkey
 Clears the **currently-viewed** tab's history, like the right-click "Clear history" entry. Implemented
@@ -60,7 +62,7 @@ Settings panel, three always-visible `@ConfigSection`s:
 | --- | --- |
 | **Tab hotkeys & close chat** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade (default `Ctrl+1..7`); `boolean closeOnRepeat` (default **true**); 1 × `Keybind` "Close chat" |
 | **Chat filters & clear history** | 6 × `Keybind` — Show all, Show friends, Show none, Show autochat, Show standard, Hide; 1 × `Keybind` "Cycle filter"; 1 × `Keybind` "Clear history" |
-| **Chat input mode** | 5 × `Keybind` — Set mode: Public, Channel, Clan, Guest clan, Group |
+| **Chat input mode** | 5 × `Keybind` — Set mode: Public, Channel, Clan, Guest clan, Group; 1 × `Keybind` "Cycle mode" |
 
 All sections render expanded (no `closedByDefault`).
 

@@ -110,19 +110,23 @@ final class ChatTabs
 	 */
 	enum ChatMode
 	{
-		PUBLIC(0, "Public"),
-		CHANNEL(1, "Channel"),
-		CLAN(2, "Clan"),
-		GUEST(3, "Guest clan"),
-		GROUP(4, "Group");
+		PUBLIC(0, "Public", true),
+		CHANNEL(1, "Channel", true),
+		CLAN(2, "Clan", true),
+		GUEST(3, "Guest clan", true),
+		// Excluded from the cycle: the game auto-resets it to the current mode when not in a
+		// group ironman group, which would trap the cycle. Still available as its own bind.
+		GROUP(4, "Group", false);
 
 		final int value;
 		final String displayName;
+		final boolean cyclable;
 
-		ChatMode(int value, String displayName)
+		ChatMode(int value, String displayName, boolean cyclable)
 		{
 			this.value = value;
 			this.displayName = displayName;
+			this.cyclable = cyclable;
 		}
 	}
 }
