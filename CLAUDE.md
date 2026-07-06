@@ -41,9 +41,12 @@ in `~/.cache/runelite-gradle`). Nothing is installed on the host.
 ./rl <task>               # any gradle task/args
 ```
 
-`./rl run` opens a GUI: it forwards `$DISPLAY` and the X11 socket into the container. On some setups
-you must first run `xhost +local:` to allow it. This is the path for the in-game discovery pass
-(Widget Inspector + Var Inspector) — there is no viable host-side `run` while the host JDK is 26.
+`./rl run` opens a GUI. It uses a GUI-capable image built from `docker/Dockerfile` (the slim JDK
+lacks X11/AWT libs — `libXext` etc. — so RuneLite's Toolkit would otherwise die with
+`UnsatisfiedLinkError`); `rl` builds it on first `run` and caches it. It forwards `$DISPLAY`, the X11
+socket, and `$XAUTHORITY` into the container. On some setups you must first run `xhost +local:` to
+allow the connection. This is the path for the in-game discovery pass (Widget Inspector + Var
+Inspector) — there is no viable host-side `run` while the host JDK is 26.
 
 If a JDK 11–23 (with `javac`) is ever installed on the host, plain `./gradlew` works and `./rl`
 becomes unnecessary.

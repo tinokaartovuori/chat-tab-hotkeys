@@ -39,12 +39,19 @@ args=(
 # Allocate a TTY when attached to one, for readable Gradle progress output.
 [ -t 1 ] && args+=(-t)
 
-# Forward X11 for GUI tasks (e.g. `run`) so the RuneLite client can open a window.
+# GUI tasks (e.g. `run`) need X11/AWT native libs the slim JDK lacks, plus a
+# forwarded display. Build the GUI image (cached after the first run) and use it.
 case "${1:-}" in
 	run|*:run)
+		IMAGE="${RUNELITE_GUI_IMAGE:-chat-tab-hotkeys/runelite-jdk:11}"
+		echo "rl: ensuring GUI image ($IMAGE) is built..." >&2
+		docker build -q -t "$IMAGE" "$PROJECT_DIR/docker" >/dev/null
 		if [ -n "${DISPLAY:-}" ]; then
 			args+=(-e "DISPLAY=$DISPLAY" --network host)
 			[ -d /tmp/.X11-unix ] && args+=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
+			# Forward the X auth cookie if present, so you needn't disable X access control.
+			[ -n "${XAUTHORITY:-}" ] && [ -f "$XAUTHORITY" ] && \
+				args+=(-e XAUTHORITY=/tmp/.Xauthority -v "$XAUTHORITY":/tmp/.Xauthority:ro)
 		else
 			echo "rl: warning: DISPLAY is unset; the RuneLite window cannot open." >&2
 		fi
