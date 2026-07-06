@@ -47,6 +47,11 @@ socket, and `$XAUTHORITY` into the container. On some setups you must first run 
 allow the connection. This is the path for the in-game discovery pass (Widget Inspector + Var
 Inspector) — there is no viable host-side `run` while the host JDK is 26.
 
+**Login.** The dev client's login box only accepts *legacy* (email+password) accounts. For a Jagex
+account, log in once with the RuneLite launcher run as `RuneLite --insecure-write-credentials`; it
+writes `~/.runelite/credentials.properties`, which the dev client reads to auto-login. `rl` bind-mounts
+the host `~/.runelite` into the container so those credentials (and config) are shared.
+
 If a JDK 11–23 (with `javac`) is ever installed on the host, plain `./gradlew` works and `./rl`
 becomes unnecessary.
 

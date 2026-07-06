@@ -46,6 +46,14 @@ case "${1:-}" in
 		IMAGE="${RUNELITE_GUI_IMAGE:-chat-tab-hotkeys/runelite-jdk:11}"
 		echo "rl: ensuring GUI image ($IMAGE) is built..." >&2
 		docker build -q -t "$IMAGE" "$PROJECT_DIR/docker" >/dev/null
+		# Share the host RuneLite profile so the dev client can auto-login. Log into a Jagex
+		# account once with the RuneLite launcher run as `RuneLite --insecure-write-credentials`;
+		# it writes ~/.runelite/credentials.properties, which the dev client then uses.
+		# (Legacy email+password accounts can just type into the login box and don't need this.)
+		# HOME=/gradle inside the container, so ~/.runelite maps to /gradle/.runelite.
+		RUNELITE_HOME="${RUNELITE_HOME:-$HOME/.runelite}"
+		mkdir -p "$RUNELITE_HOME"
+		args+=(-v "$RUNELITE_HOME":/gradle/.runelite)
 		if [ -n "${DISPLAY:-}" ]; then
 			args+=(-e "DISPLAY=$DISPLAY" --network host)
 			[ -d /tmp/.X11-unix ] && args+=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)
