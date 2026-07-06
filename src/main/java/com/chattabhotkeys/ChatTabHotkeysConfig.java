@@ -85,7 +85,8 @@ public interface ChatTabHotkeysConfig extends Config
 		keyName = "closeOnRepeat",
 		name = "Close on repeat",
 		description = "Pressing the same tab's hotkey again closes the chat. "
-			+ "When off, pressing again just re-shows the tab.",
+			+ "When off, pressing again just re-shows the tab. "
+			+ "Closing only works in resizable mode (no-op in fixed mode).",
 		position = 7,
 		section = tabsSection
 	)
@@ -97,7 +98,8 @@ public interface ChatTabHotkeysConfig extends Config
 	@ConfigItem(
 		keyName = "closeChat",
 		name = "Close chat",
-		description = "Toggle the chat closed/open. Closed re-opens to the last tab.",
+		description = "Toggle the chat closed/open. Closed re-opens to the last tab. "
+			+ "Only works in resizable mode (no-op in fixed mode).",
 		position = 8,
 		section = tabsSection
 	)
