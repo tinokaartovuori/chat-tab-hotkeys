@@ -1,41 +1,38 @@
 # Chat Tab Hotkeys
 
-Configurable hotkeys for navigating and filtering the Old School RuneScape chat. Every action maps to
-something you can already do with the mouse — switching chat tabs, setting a tab's filter, clearing a
-tab's history, and collapsing the chatbox. No gameplay automation, no overlays.
+Keyboard control for the chat tabs. Switch tab, set a tab's filter, clear its history, and open or
+close the chatbox without reaching for the mouse. Everything it does is something you can already do
+by clicking — no automation, no overlays.
 
-## Features
+## Keys
 
-- **Tab hotkeys** — one per chat tab (All, Game, Public, Private, Channel, Clan, Trade). Default binds
-  are **Ctrl+1–7**. Pressing a tab's hotkey shows it; pressing the same one again closes the chat
-  (toggle, in resizable mode).
-- **Close chat** — a hotkey to collapse/expand the chatbox; reopens to the last tab. *(Resizable mode
-  only — no-op in fixed mode.)*
-- **Chat filters** — *Show all / Show friends / Show none* applied to the currently-shown tab, exactly
-  like the right-click menu. No-ops on tabs that don't offer them (Game/All).
-- **Clear history** — clears the currently-shown tab's history. Implemented natively (no dependency on
-  the Chat History plugin).
+- **Tab keys** — one per chat tab (All, Game, Public, Private, Channel, Clan, Trade), bound to
+  **Ctrl+1–7** by default. Press a tab's key to show it; press it again to close the chat. (The
+  "press again to close" behaviour can be turned off.)
+- **Close chat** — toggles the chatbox and reopens to the last tab. Resizable mode only.
+- **Show all / friends / none** — sets the current tab's filter, exactly like the right-click menu.
+- **Clear history** — clears the current tab's messages. Done directly, so no other plugin is needed.
 
-All binds except the tab hotkeys are unbound by default — set them in the plugin settings.
+Only the tab keys are bound out of the box; bind the rest in the settings if you want them.
 
-## Usage
+## Settings
 
-Enable **Chat Tab Hotkeys** in the RuneLite configuration panel and (optionally) rebind any keys.
-Settings are grouped into two sections: *Tab hotkeys & close chat* and *Chat filters & clear history*.
+<img src="docs/settings.png" alt="Chat Tab Hotkeys settings panel" width="242">
 
-Tip: bind modifier combos or function keys. The `Ctrl+1–7` defaults are typing-safe — they won't fire
-into a chat message.
+Two groups: the tab keys and close-chat, then the filters and clear-history. The `Ctrl`+number
+defaults are safe to leave on — modifier combos don't leak into a chat message.
 
-## Behaviour notes
+## Notes
 
-- State is read from the game (current tab, collapsed state, text-entry), so hotkeys stay in sync when
-  you click tabs with the mouse.
-- Hotkeys are suppressed while a chat input/dialog is open.
-- Collapsing the chat only applies in **resizable** mode; in fixed mode the close actions no-op while
-  tab switching, filters, and clear-history still work.
-- If RuneLite's Chat History plugin is enabled with "retain chat history", a tab cleared via this
-  plugin's hotkey may repopulate on relog/world-hop.
+- The current tab and open/closed state are read from the game, so the keys stay correct after you
+  click tabs with the mouse.
+- Keys are ignored while a chat input box is open.
+- Closing the chat only works in resizable mode. In fixed mode those two actions do nothing, while
+  tab switching, filters and clear still work.
+- Filters and clear-history only apply to the tabs that offer them (not Game or All).
+- If you also run the Chat History plugin with *retain chat history* on, a tab you clear with this
+  plugin can reappear after a world-hop or relog.
 
 ## License
 
-BSD 2-Clause. See [LICENSE](LICENSE).
+BSD 2-Clause — see [LICENSE](LICENSE).
