@@ -13,7 +13,8 @@ no auto-reply, no input-channel switching.
 
 ## Actions
 
-Four groups of hotkeys. **All hotkeys are unbound by default (`Keybind.NOT_SET`)** — the user opts in.
+Four groups of hotkeys. The **7 tab binds default to `Ctrl+1..7`** (typing-safe) for immediate
+usability; close, filters, and clear-history default to `Keybind.NOT_SET` (opt-in).
 
 ### 1. Tab hotkeys — one per chat tab
 Tabs, in game order: **All, Game, Public, Private, Channel, Clan, Trade.**
@@ -36,8 +37,9 @@ Pressing a tab's hotkey, given `targetTab`:
 right-click menu entry.
 
 ### 4. Clear history — one hotkey
-Clears the **currently-viewed** tab's history, like the right-click "Clear history" entry.
-Optionally gated behind a confirmation (`confirmClearHistory`, default off).
+Clears the **currently-viewed** tab's history, like the right-click "Clear history" entry. Implemented
+natively (drops the tab's chat lines and rebuilds the chatbox) — no dependency on the Chat History
+plugin. No confirmation in v1 (see out of scope).
 
 ## Configuration
 
@@ -45,10 +47,12 @@ Settings panel, one `@ConfigSection` per group:
 
 | Section | Items |
 | --- | --- |
-| **Tab hotkeys** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade |
-| **Close chat** | 1 × `Keybind` "Close chat"; `boolean closeOnRepeat` (default **true**) |
+| **Tab hotkeys** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade (default `Ctrl+1..7`) |
+| **Close chat** | `boolean closeOnRepeat` (default **true**); 1 × `Keybind` "Close chat" |
 | **Chat filters (current tab)** | 3 × `Keybind` — Show all, Show friends, Show none |
-| **Clear history (current tab)** | 1 × `Keybind` "Clear history"; `boolean confirmClearHistory` (default **false**) |
+| **Clear history (current tab)** | 1 × `Keybind` "Clear history" |
+
+The lower three sections start collapsed (`closedByDefault`) to keep the sidebar tidy.
 
 Filters and clear-history are kept in separate sections because clear-history is destructive and
 should not sit next to the harmless filter toggles.
@@ -64,13 +68,13 @@ should not sit next to the harmless filter toggles.
 - **Fixed vs resizable mode.** Collapsing the chat only applies in resizable mode. In fixed mode, tab
   switching and filter/clear still work; the close action (and same-tab-twice-closes) no-ops rather
   than erroring.
-- **Don't fire while typing.** Hotkeys are suppressed while the chatbox is in text-entry mode, so a
-  bound key doesn't trigger mid-message. (Unbound-by-default is the first line of defence; suggesting
-  function keys is the second.)
+- **Don't fire while typing.** Hotkeys are suppressed while the chatbox is in an input/text-entry mode
+  (`MESLAYERMODE != NONE`). The primary mitigation is the bind choice: the `Ctrl+1..7` defaults (and
+  recommended modifier/function-key binds) don't leak into a chat message.
 
 ## Definition of done (v1)
 
-- [ ] 7 tab binds + 1 close bind + 3 filter binds + 1 clear-history bind, all unbound by default, each working.
+- [ ] 7 tab binds (default `Ctrl+1..7`) + 1 close bind + 3 filter binds + 1 clear-history bind (rest unbound), each working.
 - [ ] Same-tab-twice closes the chat when `closeOnRepeat` on; re-shows (no-op) when off.
 - [ ] Close bind toggles closed/open; reopens to the last tab.
 - [ ] Tab bind while chat closed opens it on that tab.
@@ -80,7 +84,17 @@ should not sit next to the harmless filter toggles.
 - [ ] No-ops gracefully in fixed mode; no exceptions.
 - [ ] No third-party dependencies; `runeLiteVersion = 'latest.release'`.
 
+## Known limitations (v1)
+
+- **Clear history + RuneLite's Chat History plugin.** Clear-history removes the tab's chat lines
+  directly; it doesn't fire the menu event RuneLite's Chat History plugin listens for. So if that
+  plugin is also enabled with "retain chat history" on, a hotkey-cleared tab may repopulate on
+  relog/world-hop. Standalone (the common case) it works as expected.
+- **Typing suppression** covers input/dialog modes (`MESLAYERMODE`); it can't detect the always-present
+  main message bar, so typing safety relies on the `Ctrl`-modifier default binds.
+
 ## Explicitly out of scope for v1
 
-Per-tab filter binds, a cycle-tabs bind, a modifier-based (hold-Alt + 1–7) scheme, and setting the
-chat **input** channel on switch. Listed in `handoff.md` under future ideas so they aren't reinvented.
+A clear-history confirmation prompt (`confirmClearHistory`), per-tab filter binds, a cycle-tabs bind,
+and setting the chat **input** channel on switch. Listed in `handoff.md` under future ideas so they
+aren't reinvented.

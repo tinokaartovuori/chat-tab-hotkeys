@@ -1,21 +1,19 @@
 package com.chattabhotkeys;
 
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.gameval.InterfaceID;
+
 /**
- * Single holder for every value that must be discovered in-game with the Widget
- * Inspector / Var Inspector (launch via {@code ./gradlew run}, which passes
- * {@code --developer-mode}). Cite the source of each value in its comment so a
- * future game update is cheap to re-verify.
+ * Static data for the seven chat tabs. Every id here is a named RuneLite
+ * {@code gameval} constant, so nothing needs in-game "Var Inspector" discovery
+ * and the values survive Jagex re-shuffling raw widget/script ids.
  *
- * Everything below is {@code UNSET} (-1) until confirmed in-game. The plugin
- * treats -1 as "not discovered yet" and no-ops rather than throwing, so the
- * scaffold runs safely before these are filled in.
- *
- * Discovery checklist (see handoff.md):
- *  - Chatbox interface group id (expected 162) and the child id of each of the 7 tab buttons.
- *  - For a tab button: which listener is populated (onOp vs onClick) + fallback script id/arg.
- *  - Right-click menu action / op id / params / option text for Show all / friends / none / Clear history.
- *  - The collapse/expand button widget id and its listener.
- *  - Vars for: current tab, collapsed state, and text-entry mode.
+ * The tab widgets live under {@link InterfaceID.Chatbox} (group 162). The
+ * {@link ChatTab#tabIndex} matches the value the game stores in
+ * {@code VarClientID.CHAT_VIEW} while that tab is shown. The per-tab
+ * {@link ChatTab#messageTypes} are ported from RuneLite's own
+ * {@code net.runelite.client.plugins.chathistory.ChatboxTab} and drive native
+ * clear-history.
  */
 final class ChatTabs
 {
@@ -23,81 +21,80 @@ final class ChatTabs
 	{
 	}
 
-	static final int UNSET = -1;
-
-	// --- Chatbox interface -------------------------------------------------
-	// TODO(discovery): confirm the chatbox group id (expected 162) in the Widget Inspector.
-	static final int CHATBOX_GROUP = UNSET;
-
-	// TODO(discovery): collapse/expand button child id within CHATBOX_GROUP.
-	static final int COLLAPSE_BUTTON_CHILD = UNSET;
-
-	// --- Client vars -------------------------------------------------------
-	// TODO(discovery): varc/varbit ids. Watch them change in the Var Inspector.
-	// Replace the get* calls in the plugin once the type (VarClientInt vs Varbit) is confirmed.
-	static final int VAR_CURRENT_TAB = UNSET;   // which tab is displayed
-	static final int VAR_CHAT_CLOSED = UNSET;   // whether the chatbox is collapsed
-	static final int VAR_TEXT_ENTRY = UNSET;    // whether the player is typing in chat
-
 	/**
-	 * The seven chat tabs, in game order. {@link #buttonChild} is the tab button's
-	 * child id within {@link ChatTabs#CHATBOX_GROUP}; {@link #varValue} is the value
-	 * {@link ChatTabs#VAR_CURRENT_TAB} holds when this tab is shown.
-	 *
-	 * TODO(discovery): fill buttonChild and varValue for each tab from the inspector.
-	 * {@code supportsFilters} marks the channel-type tabs that offer Show all/friends/none
-	 * and Clear history; Game and All do not (filter/clear hotkeys no-op there).
+	 * The seven chat tabs in game order. {@code supportsFilters}/{@code supportsClear}
+	 * mark the channel-type tabs that offer Show all/friends/none and clear-history;
+	 * Game and All do not (those actions no-op there).
 	 */
 	enum ChatTab
 	{
-		ALL(UNSET, UNSET, false),
-		GAME(UNSET, UNSET, false),
-		PUBLIC(UNSET, UNSET, true),
-		PRIVATE(UNSET, UNSET, true),
-		CHANNEL(UNSET, UNSET, true),
-		CLAN(UNSET, UNSET, true),
-		TRADE(UNSET, UNSET, true);
+		ALL(InterfaceID.Chatbox.CHAT_ALL, 0, false, false),
+		GAME(InterfaceID.Chatbox.CHAT_GAME, 1, false, false),
+		PUBLIC(InterfaceID.Chatbox.CHAT_PUBLIC, 2, true, true,
+			ChatMessageType.PUBLICCHAT, ChatMessageType.AUTOTYPER,
+			ChatMessageType.MODCHAT, ChatMessageType.MODAUTOTYPER),
+		PRIVATE(InterfaceID.Chatbox.CHAT_PRIVATE, 3, true, true,
+			ChatMessageType.PRIVATECHAT, ChatMessageType.PRIVATECHATOUT,
+			ChatMessageType.MODPRIVATECHAT, ChatMessageType.LOGINLOGOUTNOTIFICATION),
+		CHANNEL(InterfaceID.Chatbox.CHAT_FRIENDSCHAT, 4, true, true,
+			ChatMessageType.FRIENDSCHATNOTIFICATION, ChatMessageType.FRIENDSCHAT,
+			ChatMessageType.CHALREQ_FRIENDSCHAT),
+		CLAN(InterfaceID.Chatbox.CHAT_CLAN, 5, true, true,
+			ChatMessageType.CLAN_CHAT, ChatMessageType.CLAN_MESSAGE,
+			ChatMessageType.CLAN_GUEST_CHAT, ChatMessageType.CLAN_GUEST_MESSAGE),
+		TRADE(InterfaceID.Chatbox.CHAT_TRADE, 6, true, true,
+			ChatMessageType.TRADE_SENT, ChatMessageType.TRADEREQ, ChatMessageType.TRADE,
+			ChatMessageType.CHALREQ_TRADE, ChatMessageType.CLAN_GIM_CHAT, ChatMessageType.CLAN_GIM_MESSAGE);
 
-		final int buttonChild;
-		final int varValue;
+		/** Packed component id of the tab button (from {@link InterfaceID.Chatbox}). */
+		final int widgetId;
+		/** Value held by {@code VarClientID.CHAT_VIEW} when this tab is shown. */
+		final int tabIndex;
 		final boolean supportsFilters;
+		final boolean supportsClear;
+		/** Chat line types cleared for this tab (empty for tabs without clear-history). */
+		final ChatMessageType[] messageTypes;
 
-		ChatTab(int buttonChild, int varValue, boolean supportsFilters)
+		ChatTab(int widgetId, int tabIndex, boolean supportsFilters, boolean supportsClear,
+			ChatMessageType... messageTypes)
 		{
-			this.buttonChild = buttonChild;
-			this.varValue = varValue;
+			this.widgetId = widgetId;
+			this.tabIndex = tabIndex;
 			this.supportsFilters = supportsFilters;
+			this.supportsClear = supportsClear;
+			this.messageTypes = messageTypes;
+		}
+
+		/** The tab whose {@link #tabIndex} equals {@code index}, or null if none (e.g. chat closed). */
+		static ChatTab byTabIndex(int index)
+		{
+			for (ChatTab tab : values())
+			{
+				if (tab.tabIndex == index)
+				{
+					return tab;
+				}
+			}
+			return null;
 		}
 	}
 
 	/**
-	 * A right-click menu op on a tab button. The menu action / op id / option text are
-	 * consistent across the channel-type tabs; only param1 (the packed widget id of the
-	 * active tab button) changes.
-	 *
-	 * TODO(discovery): fill opId and optionText from a temporary MenuOptionClicked log
-	 * (record getMenuAction(), getId(), getMenuOption()).
+	 * A tab filter menu op. {@link #label} is matched against the tab button's
+	 * {@code Widget.getActions()} at runtime to find the op index to replay — so we
+	 * never hardcode a numeric op id.
 	 */
 	enum FilterOp
 	{
-		SHOW_ALL(UNSET, ""),
-		SHOW_FRIENDS(UNSET, ""),
-		SHOW_NONE(UNSET, ""),
-		CLEAR_HISTORY(UNSET, "");
+		SHOW_ALL("Show all"),
+		SHOW_FRIENDS("Show friends"),
+		SHOW_NONE("Show none");
 
-		final int opId;
-		final String optionText;
+		final String label;
 
-		FilterOp(int opId, String optionText)
+		FilterOp(String label)
 		{
-			this.opId = opId;
-			this.optionText = optionText;
+			this.label = label;
 		}
-	}
-
-	/** Packs a (group, child) pair into the param1 form used by {@code client.menuAction}. */
-	static int packComponentId(int group, int child)
-	{
-		return (group << 16) | child;
 	}
 }

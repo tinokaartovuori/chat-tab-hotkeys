@@ -1,5 +1,7 @@
 package com.chattabhotkeys;
 
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -12,12 +14,12 @@ public interface ChatTabHotkeysConfig extends Config
 	String GROUP = "chattabhotkeys";
 
 	// ------------------------------------------------------------------
-	// Sections
+	// Sections (lower ones start collapsed to keep the sidebar tidy)
 	// ------------------------------------------------------------------
 	@ConfigSection(
 		name = "Tab hotkeys",
-		description = "One hotkey per chat tab. Pressing a tab's hotkey shows it; "
-			+ "pressing the same one again closes the chat (see 'Close on repeat').",
+		description = "One hotkey per chat tab. Defaults are Ctrl+1–7; press a tab's hotkey again to close the chat. "
+			+ "Bind function keys or modifier combos so binds don't fire while typing.",
 		position = 0
 	)
 	String tabsSection = "tabsSection";
@@ -25,97 +27,100 @@ public interface ChatTabHotkeysConfig extends Config
 	@ConfigSection(
 		name = "Close chat",
 		description = "Collapse/expand the chatbox. Only meaningful in resizable mode.",
-		position = 1
+		position = 1,
+		closedByDefault = true
 	)
 	String closeSection = "closeSection";
 
 	@ConfigSection(
 		name = "Chat filters (current tab)",
 		description = "Set the filter of the currently-shown tab, like the right-click menu. "
-			+ "No-ops on tabs that don't offer the option (e.g. Game / All).",
-		position = 2
+			+ "No-ops on tabs that don't offer the option (Game / All).",
+		position = 2,
+		closedByDefault = true
 	)
 	String filtersSection = "filtersSection";
 
 	@ConfigSection(
 		name = "Clear history (current tab)",
 		description = "Clear the currently-shown tab's history. Kept separate because it is destructive.",
-		position = 3
+		position = 3,
+		closedByDefault = true
 	)
 	String clearSection = "clearSection";
 
 	// ------------------------------------------------------------------
 	// Tab hotkeys — game order: All, Game, Public, Private, Channel, Clan, Trade.
-	// Tip: bind function keys; plain letters fire while typing in chat.
+	// Default to Ctrl+1..7 (typing-safe: Ctrl combos never leak into chat).
 	// ------------------------------------------------------------------
 	@ConfigItem(keyName = "tabAll", name = "All", description = "Show the All tab.", position = 0, section = tabsSection)
 	default Keybind tabAll()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(keyName = "tabGame", name = "Game", description = "Show the Game tab.", position = 1, section = tabsSection)
 	default Keybind tabGame()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(keyName = "tabPublic", name = "Public", description = "Show the Public tab.", position = 2, section = tabsSection)
 	default Keybind tabPublic()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(keyName = "tabPrivate", name = "Private", description = "Show the Private tab.", position = 3, section = tabsSection)
 	default Keybind tabPrivate()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(keyName = "tabChannel", name = "Channel", description = "Show the Channel tab.", position = 4, section = tabsSection)
 	default Keybind tabChannel()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_5, InputEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(keyName = "tabClan", name = "Clan", description = "Show the Clan tab.", position = 5, section = tabsSection)
 	default Keybind tabClan()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_6, InputEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(keyName = "tabTrade", name = "Trade", description = "Show the Trade tab.", position = 6, section = tabsSection)
 	default Keybind tabTrade()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_7, InputEvent.CTRL_DOWN_MASK);
 	}
 
 	// ------------------------------------------------------------------
 	// Close chat
 	// ------------------------------------------------------------------
 	@ConfigItem(
-		keyName = "closeChat",
-		name = "Close chat",
-		description = "Toggle the chat closed/open. Closed re-opens to the last tab.",
-		position = 0,
-		section = closeSection
-	)
-	default Keybind closeChat()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
 		keyName = "closeOnRepeat",
 		name = "Close on repeat",
 		description = "Pressing the same tab's hotkey again closes the chat. "
 			+ "When off, pressing again just re-shows the tab.",
-		position = 1,
+		position = 0,
 		section = closeSection
 	)
 	default boolean closeOnRepeat()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "closeChat",
+		name = "Close chat",
+		description = "Toggle the chat closed/open. Closed re-opens to the last tab.",
+		position = 1,
+		section = closeSection
+	)
+	default Keybind closeChat()
+	{
+		return Keybind.NOT_SET;
 	}
 
 	// ------------------------------------------------------------------
@@ -170,17 +175,5 @@ public interface ChatTabHotkeysConfig extends Config
 	default Keybind clearHistory()
 	{
 		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
-		keyName = "confirmClearHistory",
-		name = "Confirm first",
-		description = "Ask for confirmation before clearing history (a mis-pressed hotkey is easy to hit).",
-		position = 1,
-		section = clearSection
-	)
-	default boolean confirmClearHistory()
-	{
-		return false;
 	}
 }
