@@ -64,9 +64,9 @@ language level, **no third-party dependencies**.
 
 - **Two distinct mechanisms for tab actions:**
   - *Left-click behavior* (switch tab, collapse/expand chat) → replay the tab button widget's own CS2
-    listener: `client.createScriptEvent(tab.getOnOpListener()).setSource(tab).run()` (fall back to
-    `getOnClickListener()`). This is ID-stable across Jagex script reshuffles; prefer it over
-    `runScript(scriptId, arg)`.
+    listener: `client.createScriptEventBuilder(tab.getOnOpListener()).setSource(tab).build().run()`.
+    (Widget exposes no `getOnClickListener()` getter — only `getOnOpListener()`; if a button turns out
+    to use onClick, fall back to `client.runScript(...)`.) ID-stable across Jagex script reshuffles.
   - *Right-click menu ops* (Show all/friends/none, Clear history) → replay a menu action via
     `client.menuAction(param0, param1, menuAction, id, -1, option, target)`, where `param1` is the
     packed widget id of the currently-active tab's button. These op ids are consistent across the
@@ -82,3 +82,25 @@ language level, **no third-party dependencies**.
   offer Show all/friends/none), no-op. In fixed mode, chat collapse can't happen, so the close bind
   and same-tab-twice-closes must no-op rather than throw. Suppress hotkeys entirely while the user is
   typing in chat.
+
+## Releasing
+
+The Plugin Hub distributes plugins by **pinning a commit hash**, not by git tags or GitHub releases:
+the hub repo holds `plugins/chat-tab-hotkeys` with `repository=` + `commit=<40-char hash>`, and a
+"release" is a PR there that bumps `commit=`. The `version=` in `runelite-plugin.properties` is
+optional (the commit is used if absent) — treat it as the user-visible version label. Because
+`build=standard`, the hub **replaces `build.gradle`/`settings.gradle`** at build time, so their
+contents (and the `rl` wrapper) matter only for local dev, never for the hub build.
+
+Tags/releases/CHANGELOG are for our own tracking, not a hub requirement (many hub plugins skip them).
+Model to follow: [`melkypie/resource-packs`](https://github.com/melkypie/resource-packs) — SemVer
+tags + GitHub Releases + `CHANGELOG.md`. Commit style is Conventional Commits; **no** Claude
+co-author trailer.
+
+Release steps (SemVer: MAJOR breaking / MINOR feature / PATCH fix):
+1. Move `CHANGELOG.md` `[Unreleased]` items under a new `## [x.y.z]` heading; set `version=x.y.z` in
+   `runelite-plugin.properties`.
+2. `git commit -m "chore: release vX.Y.Z"`, then `git tag -a vX.Y.Z -m "vX.Y.Z"`, `git push --follow-tags`.
+   Optionally create a GitHub Release from the tag with the changelog section as notes.
+3. Update the hub manifest's `commit=` to that tagged commit via a branch + PR to `runelite/plugin-hub`
+   (see `handoff.md` → Plugin Hub submission).
