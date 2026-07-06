@@ -11,9 +11,15 @@ by clicking, with no automation and no overlays.
   chat. The "press again to close" behaviour can be turned off.
 - **Close chat**: toggles the chatbox and reopens to the last tab. Works in resizable mode only.
 - **Show all / friends / none**: sets the current tab's filter, exactly like the right-click menu.
-- **Cycle filter**: rotates the current tab through Show all, Show friends and Show none with one key.
+- **Show autochat / standard / Hide**: the Public tab's extra filter options. These do nothing on the
+  other tabs, which do not offer them.
+- **Cycle filter**: rotates the current tab through the options it offers with one key. That is three
+  on most tabs and five on the Public tab.
 - **Clear history**: clears the current tab's messages. It does this directly, so no other plugin is
   needed.
+- **Chat input mode**: sets which channel you type into (Public, Channel, Clan, Guest clan, Group),
+  the same as the right-click "Set chat mode" on the All tab. Group only works while you are in a group
+  ironman group.
 
 Only the tab keys are bound out of the box. Bind the rest in the settings if you want them.
 
@@ -21,9 +27,9 @@ Only the tab keys are bound out of the box. Bind the rest in the settings if you
 
 <img src="docs/settings.png" alt="Chat Tab Hotkeys settings panel" width="242">
 
-There are two groups. The first holds the tab keys and close chat, the second holds the filters and
-clear history. The Ctrl+number defaults are safe to leave on, since modifier combos do not leak into a
-chat message.
+There are three groups. The first holds the tab keys and close chat, the second holds the filters and
+clear history, the third holds the chat input modes. The Ctrl+number defaults are safe to leave on,
+since modifier combos do not leak into a chat message.
 
 ## Notes
 

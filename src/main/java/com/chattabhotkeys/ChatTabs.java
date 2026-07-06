@@ -82,13 +82,17 @@ final class ChatTabs
 	/**
 	 * A tab filter menu op. {@link #label} is matched against the tab button's
 	 * {@code Widget.getActions()} at runtime to find the op index to replay — so we
-	 * never hardcode a numeric op id.
+	 * never hardcode a numeric op id. Most channel tabs offer all/friends/none;
+	 * the Public tab instead offers autochat/standard/friends/none/hide.
 	 */
 	enum FilterOp
 	{
 		SHOW_ALL("Show all"),
 		SHOW_FRIENDS("Show friends"),
-		SHOW_NONE("Show none");
+		SHOW_NONE("Show none"),
+		SHOW_AUTOCHAT("Show autochat"),
+		SHOW_STANDARD("Show standard"),
+		HIDE("Hide");
 
 		final String label;
 
@@ -96,12 +100,29 @@ final class ChatTabs
 		{
 			this.label = label;
 		}
+	}
 
-		/** Next filter in the cycle: all -> friends -> none -> all. */
-		FilterOp next()
+	/**
+	 * Chat input channel, i.e. which channel typed messages go to (the game's right-click
+	 * "Set chat mode" on the All tab). Set by writing {@code VarClientID.CHATBOX_MODE} to
+	 * {@link #value} and rerunning the chatbox-input build script. Group (GIM) auto-resets
+	 * to the current mode if the player is not in a group.
+	 */
+	enum ChatMode
+	{
+		PUBLIC(0, "Public"),
+		CHANNEL(1, "Channel"),
+		CLAN(2, "Clan"),
+		GUEST(3, "Guest clan"),
+		GROUP(4, "Group");
+
+		final int value;
+		final String displayName;
+
+		ChatMode(int value, String displayName)
 		{
-			FilterOp[] values = values();
-			return values[(ordinal() + 1) % values.length];
+			this.value = value;
+			this.displayName = displayName;
 		}
 	}
 }

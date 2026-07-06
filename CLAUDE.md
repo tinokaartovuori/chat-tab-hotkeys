@@ -80,9 +80,14 @@ language level, **no third-party dependencies**.
     `client.createScriptEventBuilder(button.getOnOpListener()).setOp(1).setSource(button).build().run()`.
     In resizable mode, op-1 on the *active* tab natively collapses the chat, which is how close/toggle
     works; in fixed mode it just re-selects, so close actions no-op.
-  - *Filters (Show all/friends/none)* → resolve the op index at runtime by matching the tab button's
-    `getActions()` (via `Text.removeTags(...).equalsIgnoreCase(op.label)`), then replay `.setOp(i+1)`.
-    Absent label (Game/All) → silent no-op.
+  - *Filters* → resolve the op index at runtime by matching the tab button's `getActions()` by label
+    suffix, then replay `.setOp(i+1)`. Individual binds match one label (`FilterOp`); `Cycle filter`
+    detects all filter ops on the button (label starts with "show" or is "hide") and rotates among
+    them, so it adapts per tab (3 on most, 5 on Public). Absent label → silent no-op.
+
+- **Chat input mode** (which channel you type into) is *not* a widget op — set it the game's way:
+  `client.setVarcIntValue(VarClientID.CHATBOX_MODE /*945*/, mode)` (0=Public,1=Channel,2=Clan,3=Guest,
+  4=Group) then `client.runScript(ScriptID.CHAT_PROMPT_INIT /*223*/)` to redraw the input line.
 
 - **Clear history is native (no Chat History plugin dependency).** For the active tab's
   `ChatMessageType`s, drop every `MessageNode` from `client.getChatLineMap()` then

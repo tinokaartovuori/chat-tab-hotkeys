@@ -32,6 +32,14 @@ public interface ChatTabHotkeysConfig extends Config
 	)
 	String filtersSection = "filtersSection";
 
+	@ConfigSection(
+		name = "Chat input mode",
+		description = "Set which channel your typed messages go to, like the right-click 'Set chat mode' on the All tab. "
+			+ "Group only works while you are in a group ironman group.",
+		position = 2
+	)
+	String modeSection = "modeSection";
+
 	// ------------------------------------------------------------------
 	// Tab hotkeys — game order: All, Game, Public, Private, Channel, Clan, Trade.
 	// Default to Ctrl+1..7 (typing-safe: Ctrl combos never leak into chat).
@@ -148,10 +156,47 @@ public interface ChatTabHotkeysConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showAutochat",
+		name = "Show autochat",
+		description = "Set the Public tab's filter to 'Show autochat'. Public tab only.",
+		position = 3,
+		section = filtersSection
+	)
+	default Keybind showAutochat()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "showStandard",
+		name = "Show standard",
+		description = "Set the Public tab's filter to 'Show standard'. Public tab only.",
+		position = 4,
+		section = filtersSection
+	)
+	default Keybind showStandard()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "hide",
+		name = "Hide",
+		description = "Set the Public tab's filter to 'Hide'. Public tab only.",
+		position = 5,
+		section = filtersSection
+	)
+	default Keybind hide()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
 		keyName = "cycleFilter",
 		name = "Cycle filter",
-		description = "Cycle the currently-shown tab's filter: Show all, then Show friends, then Show none.",
-		position = 3,
+		description = "Cycle the currently-shown tab's filter through the options it offers "
+			+ "(all/friends/none on most tabs, autochat/standard/friends/none/hide on Public).",
+		position = 6,
 		section = filtersSection
 	)
 	default Keybind cycleFilter()
@@ -166,10 +211,73 @@ public interface ChatTabHotkeysConfig extends Config
 		keyName = "clearHistory",
 		name = "Clear history",
 		description = "Clear the currently-shown tab's history.",
-		position = 4,
+		position = 7,
 		section = filtersSection
 	)
 	default Keybind clearHistory()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	// ------------------------------------------------------------------
+	// Chat input mode — which channel typed messages go to.
+	// ------------------------------------------------------------------
+	@ConfigItem(
+		keyName = "setModePublic",
+		name = "Set mode: Public",
+		description = "Type into Public chat.",
+		position = 0,
+		section = modeSection
+	)
+	default Keybind setModePublic()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "setModeChannel",
+		name = "Set mode: Channel",
+		description = "Type into your friends chat channel.",
+		position = 1,
+		section = modeSection
+	)
+	default Keybind setModeChannel()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "setModeClan",
+		name = "Set mode: Clan",
+		description = "Type into your clan chat.",
+		position = 2,
+		section = modeSection
+	)
+	default Keybind setModeClan()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "setModeGuest",
+		name = "Set mode: Guest clan",
+		description = "Type into a guest clan chat.",
+		position = 3,
+		section = modeSection
+	)
+	default Keybind setModeGuest()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "setModeGroup",
+		name = "Set mode: Group",
+		description = "Type into group ironman chat. Only works while in a group.",
+		position = 4,
+		section = modeSection
+	)
+	default Keybind setModeGroup()
 	{
 		return Keybind.NOT_SET;
 	}

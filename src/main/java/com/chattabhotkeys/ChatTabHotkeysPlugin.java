@@ -1,5 +1,6 @@
 package com.chattabhotkeys;
 
+import com.chattabhotkeys.ChatTabs.ChatMode;
 import com.chattabhotkeys.ChatTabs.ChatTab;
 import com.chattabhotkeys.ChatTabs.FilterOp;
 import com.google.inject.Provides;
@@ -59,8 +60,11 @@ public class ChatTabHotkeysPlugin extends Plugin
 	/** Which tab to re-open to when the close hotkey expands a collapsed chat. */
 	private ChatTab lastTab = ChatTab.ALL;
 
-	/** Last filter the cycle hotkey applied per tab (the game state isn't readable for all tabs). */
-	private final Map<ChatTab, FilterOp> cycledFilter = new EnumMap<>(ChatTab.class);
+	/**
+	 * The {@code getActions()} index the cycle hotkey last applied per tab. The game's current
+	 * filter isn't readable for all tabs, so the cycle advances from here.
+	 */
+	private final Map<ChatTab, Integer> cycleIndex = new EnumMap<>(ChatTab.class);
 
 	@Override
 	protected void startUp()
@@ -78,9 +82,18 @@ public class ChatTabHotkeysPlugin extends Plugin
 		register(config::showAll, () -> onFilterHotkey(FilterOp.SHOW_ALL));
 		register(config::showFriends, () -> onFilterHotkey(FilterOp.SHOW_FRIENDS));
 		register(config::showNone, () -> onFilterHotkey(FilterOp.SHOW_NONE));
+		register(config::showAutochat, () -> onFilterHotkey(FilterOp.SHOW_AUTOCHAT));
+		register(config::showStandard, () -> onFilterHotkey(FilterOp.SHOW_STANDARD));
+		register(config::hide, () -> onFilterHotkey(FilterOp.HIDE));
 		register(config::cycleFilter, this::onCycleFilterHotkey);
 
 		register(config::clearHistory, this::onClearHistoryHotkey);
+
+		register(config::setModePublic, () -> onChatModeHotkey(ChatMode.PUBLIC));
+		register(config::setModeChannel, () -> onChatModeHotkey(ChatMode.CHANNEL));
+		register(config::setModeClan, () -> onChatModeHotkey(ChatMode.CLAN));
+		register(config::setModeGuest, () -> onChatModeHotkey(ChatMode.GUEST));
+		register(config::setModeGroup, () -> onChatModeHotkey(ChatMode.GROUP));
 	}
 
 	@Override
@@ -199,13 +212,65 @@ public class ChatTabHotkeysPlugin extends Plugin
 		{
 			return;
 		}
-		// The game's current filter isn't readable for every tab, so cycle from what we last
-		// applied. Default so the first press lands on Show all.
-		FilterOp next = cycledFilter.getOrDefault(tab, FilterOp.SHOW_NONE).next();
-		if (applyFilter(tab, next))
+		Widget button = client.getWidget(tab.widgetId);
+		if (button == null)
 		{
-			cycledFilter.put(tab, next);
+			return;
 		}
+
+		// Read the filter ops the tab actually offers (3 on most tabs, 5 on Public), in menu order,
+		// as getActions() indices. This keeps the cycle correct per tab without hardcoding.
+		List<Integer> ops = filterOpIndices(button);
+		if (ops.isEmpty())
+		{
+			return;
+		}
+
+		// Advance from the last index we applied on this tab (the game's filter isn't readable).
+		Integer last = cycleIndex.get(tab);
+		int pos = last == null ? -1 : ops.indexOf(last);
+		int nextIndex = ops.get((pos + 1) % ops.size());
+		replayWidgetOp(button, nextIndex + 1);
+		cycleIndex.put(tab, nextIndex);
+	}
+
+	/**
+	 * The {@code getActions()} indices of a tab button's filter ops (Show …/Hide), in menu order.
+	 * Excludes non-filter ops like "Switch tab" and "Clear history".
+	 */
+	private List<Integer> filterOpIndices(Widget button)
+	{
+		List<Integer> indices = new ArrayList<>();
+		String[] actions = button.getActions();
+		if (actions == null)
+		{
+			return indices;
+		}
+		for (int i = 0; i < actions.length; i++)
+		{
+			if (isFilterLabel(actions[i]))
+			{
+				indices.add(i);
+			}
+		}
+		return indices;
+	}
+
+	/** True for filter op labels ("Show …" or "Hide"), ignoring tags and any "Tab:" prefix. */
+	private static boolean isFilterLabel(String action)
+	{
+		if (action == null)
+		{
+			return false;
+		}
+		String text = Text.removeTags(action);
+		int colon = text.lastIndexOf(':');
+		if (colon >= 0)
+		{
+			text = text.substring(colon + 1);
+		}
+		text = text.trim().toLowerCase(Locale.ROOT);
+		return text.startsWith("show") || text.equals("hide");
 	}
 
 	/**
@@ -283,6 +348,15 @@ public class ChatTabHotkeysPlugin extends Plugin
 		{
 			client.runScript(ScriptID.SPLITPM_CHANGED);
 		}
+	}
+
+	private void onChatModeHotkey(ChatMode mode)
+	{
+		// Set which channel typed messages go to, the game's own way: write the mode var and
+		// rerun the chatbox-input build script so the input line redraws with the new mode.
+		// Group (GIM) auto-resets to the current mode if the player isn't in a group.
+		client.setVarcIntValue(VarClientID.CHATBOX_MODE, mode.value);
+		client.runScript(ScriptID.CHAT_PROMPT_INIT);
 	}
 
 	// ----------------------------------------------------------------------
