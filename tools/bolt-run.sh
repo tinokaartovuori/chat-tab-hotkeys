@@ -20,5 +20,10 @@ PROJECT_DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
 REAL_HOME="$(getent passwd "$(id -un)" | cut -d: -f6)"
 export RUNELITE_GRADLE_CACHE="${RUNELITE_GRADLE_CACHE:-$REAL_HOME/.cache/runelite-gradle}"
 
+# Use a DEDICATED, clean RuneLite profile — not Bolt's shared one, which is full of
+# the user's installed Hub plugins (e.g. Watchdog spams NPEs and destabilises the
+# client). Login still works: it's driven by the JX_* session env, not the profile.
+export RUNELITE_HOME="${RUNELITE_HOME:-$REAL_HOME/.runelite-chattabhotkeys}"
+
 cd "$PROJECT_DIR"
 exec ./rl run
