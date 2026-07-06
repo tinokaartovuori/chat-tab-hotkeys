@@ -54,6 +54,10 @@ case "${1:-}" in
 		RUNELITE_HOME="${RUNELITE_HOME:-$HOME/.runelite}"
 		mkdir -p "$RUNELITE_HOME"
 		args+=(-v "$RUNELITE_HOME":/gradle/.runelite)
+		# Forward a Jagex session (e.g. injected by the Bolt launcher) so the client auto-logs-in.
+		for v in JX_SESSION_ID JX_CHARACTER_ID JX_DISPLAY_NAME JX_ACCESS_TOKEN JX_REFRESH_TOKEN JX_LOGIN_PROVIDER; do
+			[ -n "${!v:-}" ] && args+=(-e "$v")
+		done
 		if [ -n "${DISPLAY:-}" ]; then
 			args+=(-e "DISPLAY=$DISPLAY" --network host)
 			[ -d /tmp/.X11-unix ] && args+=(-v /tmp/.X11-unix:/tmp/.X11-unix:ro)

@@ -47,10 +47,15 @@ socket, and `$XAUTHORITY` into the container. On some setups you must first run 
 allow the connection. This is the path for the in-game discovery pass (Widget Inspector + Var
 Inspector) — there is no viable host-side `run` while the host JDK is 26.
 
-**Login.** The dev client's login box only accepts *legacy* (email+password) accounts. For a Jagex
-account, log in once with the RuneLite launcher run as `RuneLite --insecure-write-credentials`; it
-writes `~/.runelite/credentials.properties`, which the dev client reads to auto-login. `rl` bind-mounts
-the host `~/.runelite` into the container so those credentials (and config) are shared.
+**Login.** The dev client's login box only accepts *legacy* (email+password) accounts. Two ways in for
+a Jagex account:
+- **Bolt launcher (set up on this machine):** Bolt's `runelite_launch_command` points at
+  `tools/bolt-run.sh`, so clicking *Play* in Bolt runs our Docker dev client with Bolt's injected
+  Jagex session env (`JX_SESSION_ID`/`JX_CHARACTER_ID`/`JX_DISPLAY_NAME`), which `rl run` forwards into
+  the container → auto-login. (RuneLite auth here is env-based; Bolt uses no LD_PRELOAD shim for it.)
+- **Official launcher:** run it as `RuneLite --insecure-write-credentials` to write
+  `~/.runelite/credentials.properties`, which the dev client reads. `rl` bind-mounts the host
+  `~/.runelite` into the container so credentials/config are shared.
 
 If a JDK 11–23 (with `javac`) is ever installed on the host, plain `./gradlew` works and `./rl`
 becomes unnecessary.
