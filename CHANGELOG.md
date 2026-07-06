@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-06
+
 ### Added
 - Configurable hotkeys to switch to each chat tab (All, Game, Public, Private, Channel, Clan, Trade),
   defaulting to `Ctrl+1..7`.
@@ -19,10 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plus a Cycle mode hotkey that rotates Public / Channel / Clan / Guest clan.
 - Native clear-history hotkey for the currently-viewed tab (no Chat History plugin dependency).
 - `closeOnRepeat` option: pressing a tab's hotkey again closes the chat.
-- Settings grouped into two always-visible sections: "Tab hotkeys & close chat" and
-  "Chat filters & clear history".
+- Settings grouped into three always-visible sections: "Tab hotkeys & close chat",
+  "Chat filters & clear history", and "Chat input mode".
 
-_Note: pre-1.0.0 and not yet published to the Plugin Hub; behaviour is defined in [`spec.md`](spec.md).
-Needs an in-game smoke test before tagging v1._
-
-[Unreleased]: https://github.com/tinokaartovuori/chat-tab-hotkeys/commits/main
+[Unreleased]: https://github.com/tinokaartovuori/chat-tab-hotkeys/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.0.0
