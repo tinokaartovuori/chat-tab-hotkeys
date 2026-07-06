@@ -43,16 +43,14 @@ plugin. No confirmation in v1 (see out of scope).
 
 ## Configuration
 
-Settings panel, one `@ConfigSection` per group:
+Settings panel, two always-visible `@ConfigSection`s:
 
 | Section | Items |
 | --- | --- |
-| **Tab hotkeys** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade (default `Ctrl+1..7`) |
-| **Close chat** | `boolean closeOnRepeat` (default **true**); 1 × `Keybind` "Close chat" |
-| **Chat filters (current tab)** | 3 × `Keybind` — Show all, Show friends, Show none |
-| **Clear history (current tab)** | 1 × `Keybind` "Clear history" |
+| **Tab hotkeys & close chat** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade (default `Ctrl+1..7`); `boolean closeOnRepeat` (default **true**); 1 × `Keybind` "Close chat" |
+| **Chat filters & clear history** | 3 × `Keybind` — Show all, Show friends, Show none; 1 × `Keybind` "Clear history" |
 
-The lower three sections start collapsed (`closedByDefault`) to keep the sidebar tidy.
+Both sections render expanded (no `closedByDefault`).
 
 Filters and clear-history are kept in separate sections because clear-history is destructive and
 should not sit next to the harmless filter toggles.

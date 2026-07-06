@@ -14,40 +14,23 @@ public interface ChatTabHotkeysConfig extends Config
 	String GROUP = "chattabhotkeys";
 
 	// ------------------------------------------------------------------
-	// Sections (lower ones start collapsed to keep the sidebar tidy)
+	// Sections
 	// ------------------------------------------------------------------
 	@ConfigSection(
-		name = "Tab hotkeys",
-		description = "One hotkey per chat tab. Defaults are Ctrl+1–7; press a tab's hotkey again to close the chat. "
+		name = "Tab hotkeys & close chat",
+		description = "One hotkey per chat tab, plus closing the chat. Defaults are Ctrl+1–7; press a tab's hotkey again to close the chat. "
 			+ "Bind function keys or modifier combos so binds don't fire while typing.",
 		position = 0
 	)
 	String tabsSection = "tabsSection";
 
 	@ConfigSection(
-		name = "Close chat",
-		description = "Collapse/expand the chatbox. Only meaningful in resizable mode.",
-		position = 1,
-		closedByDefault = true
-	)
-	String closeSection = "closeSection";
-
-	@ConfigSection(
-		name = "Chat filters (current tab)",
-		description = "Set the filter of the currently-shown tab, like the right-click menu. "
-			+ "No-ops on tabs that don't offer the option (Game / All).",
-		position = 2,
-		closedByDefault = true
+		name = "Chat filters & clear history",
+		description = "Set the currently-shown tab's filter (like the right-click menu; no-ops on tabs that don't offer it) "
+			+ "or clear its history.",
+		position = 1
 	)
 	String filtersSection = "filtersSection";
-
-	@ConfigSection(
-		name = "Clear history (current tab)",
-		description = "Clear the currently-shown tab's history. Kept separate because it is destructive.",
-		position = 3,
-		closedByDefault = true
-	)
-	String clearSection = "clearSection";
 
 	// ------------------------------------------------------------------
 	// Tab hotkeys — game order: All, Game, Public, Private, Channel, Clan, Trade.
@@ -103,8 +86,8 @@ public interface ChatTabHotkeysConfig extends Config
 		name = "Close on repeat",
 		description = "Pressing the same tab's hotkey again closes the chat. "
 			+ "When off, pressing again just re-shows the tab.",
-		position = 0,
-		section = closeSection
+		position = 7,
+		section = tabsSection
 	)
 	default boolean closeOnRepeat()
 	{
@@ -115,8 +98,8 @@ public interface ChatTabHotkeysConfig extends Config
 		keyName = "closeChat",
 		name = "Close chat",
 		description = "Toggle the chat closed/open. Closed re-opens to the last tab.",
-		position = 1,
-		section = closeSection
+		position = 8,
+		section = tabsSection
 	)
 	default Keybind closeChat()
 	{
@@ -169,8 +152,8 @@ public interface ChatTabHotkeysConfig extends Config
 		keyName = "clearHistory",
 		name = "Clear history",
 		description = "Clear the currently-shown tab's history.",
-		position = 0,
-		section = clearSection
+		position = 3,
+		section = filtersSection
 	)
 	default Keybind clearHistory()
 	{
