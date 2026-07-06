@@ -99,7 +99,7 @@ public class ChatTabHotkeysPlugin extends Plugin
 	 * CHAT_VIEW no longer maps to a tab, so we keep the previous value.
 	 */
 	@Subscribe
-	public void onVarClientChanged(VarClientIntChanged event)
+	public void onVarClientIntChanged(VarClientIntChanged event)
 	{
 		if (event.getIndex() == VarClientID.CHAT_VIEW)
 		{

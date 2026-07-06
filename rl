@@ -51,9 +51,12 @@ case "${1:-}" in
 		# it writes ~/.runelite/credentials.properties, which the dev client then uses.
 		# (Legacy email+password accounts can just type into the login box and don't need this.)
 		# HOME=/gradle inside the container, so ~/.runelite maps to /gradle/.runelite.
+		# The container JDK's user.home is /home/ubuntu (image default user), and RuneLite
+		# writes its profile to ${user.home}/.runelite — NOT $HOME. Mount there so config,
+		# plugin-enabled state, and any credentials.properties persist across runs.
 		RUNELITE_HOME="${RUNELITE_HOME:-$HOME/.runelite}"
 		mkdir -p "$RUNELITE_HOME"
-		args+=(-v "$RUNELITE_HOME":/gradle/.runelite)
+		args+=(-v "$RUNELITE_HOME":/home/ubuntu/.runelite)
 		# Forward a Jagex session (e.g. injected by the Bolt launcher) so the client auto-logs-in.
 		for v in JX_SESSION_ID JX_CHARACTER_ID JX_DISPLAY_NAME JX_ACCESS_TOKEN JX_REFRESH_TOKEN JX_LOGIN_PROVIDER; do
 			[ -n "${!v:-}" ] && args+=(-e "$v")
