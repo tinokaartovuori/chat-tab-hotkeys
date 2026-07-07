@@ -1,161 +1,92 @@
-# Handoff: "Chat Tab Hotkeys" — RuneLite Plugin
+# Handoff: Chat Tab Hotkeys — current state
 
-## What this is
-A background/spec doc for building a small RuneLite Plugin Hub plugin. Read this first, then scaffold the project and implement to the acceptance criteria at the bottom. Still a small plugin — everything acts on chat tabs the player can already control by mouse; we're just adding hotkeys.
+Short doc for whoever picks this up next (future me or Kart5a later). The product spec is in
+`spec.md`, build and release detail in `CLAUDE.md`. This file is about where things actually stand.
 
-## Name
-**Recommended:** `Chat Tab Hotkeys` (repo: `chat-tab-hotkeys`).
-It's plain and searchable, which is the RuneLite convention. Alternatives if you prefer: `Chat Hotkeys` (broader, also covers the close-chat and filter binds) or `Chat Tab Keybinds`. Avoid "Quick Chat" — that's an unrelated RS3 feature name and will confuse users.
+## Where things stand
 
----
+The plugin is fully implemented, tagged **v1.0.0**, and works in game (tested via the Bolt dev client).
+It was submitted to the RuneLite Plugin Hub as PR #13356 and **rejected**. A policy question has been
+posted to the RuneLite Discord and we are waiting on the answer before deciding the next step. The
+plugin works locally right now no matter what the hub decides.
 
-## Feature spec (the whole plugin)
-Configurable hotkeys for navigating and filtering the chat. Four groups of actions:
+## Why it was rejected
 
-**1. Tab hotkeys** — one per chat tab. Tabs in game order: **All, Game, Public, Private, Channel, Clan, Trade.**
-- Tab hotkey → show that tab. If chat is closed (collapsed), open it and show that tab.
-- Same tab hotkey twice → close the chat. Default ON; governed by `closeOnRepeat`. With it off, pressing again just re-shows the tab.
+Reviewer riktenx, word for word:
 
-**2. Close chat** — one hotkey that toggles the chat closed/open. Closed → open (to last tab). Open → close.
+> we don't allow clientscript execution for the purpose of switching active interfaces, even when
+> behind keypresses, because this is liable to trigger anticheat and get users banned
 
-**3. Filter hotkeys** — act on the **currently-viewed tab**: `Show all`, `Show friends`, `Show none`. These set that tab's filter, exactly like the right-click menu.
+Our mechanism was `replayWidgetOp()`, which fires the tab button's own onop CS2 handler via
+`client.createScriptEventBuilder(button.getOnOpListener()).setOp(n).build().run()` to switch tabs and
+apply filters. That is a generic "click any widget" primitive, which is what the reviewer objects to.
 
-**4. Clear history** — one hotkey that clears the **currently-viewed tab's** history, like the right-click "Clear history" option.
+## What the research established (the reusable facts)
 
-For groups 3 and 4: these options only exist on the channel-type tabs (Public, Private, Channel, Clan, Trade). The Game tab has On/Filtered instead, and the All tab differs. If the active tab doesn't support the pressed action, **no-op silently** — don't error, don't guess a target.
+- Script **175** is `[clientscript,chat_button_onop]`, the chat tab button's own onop handler.
+  `runScript(175, 1, N)` with N a tab index 0..6:
+  - N not equal to the current tab, it sets `CHAT_VIEW` (varc 41) to N and redraws, so it switches to tab N.
+  - resizable and N equal to the current tab, it sets varc 41 to 1337, which collapses the chat. This
+    is exactly how Toggle Chat closes.
+  - It is packet free. It only writes client side varcs and redraws. No server op.
+- **Toggle Chat** (approved, hub commit `8bc61d2`) uses exactly `runScript(175, 1, tab)` to open the
+  chat to a chosen tab. So the same call is already accepted for one plugin.
+- **Filters** (Show all/friends/none and the Public tab set) call `chat_set_filter`, which is
+  server persisted, so setting a filter **sends a packet**. Filters are dead regardless of the outcome.
+- `client.menuAction` is **not** a loophole. It is worse, it sends an `if_button` packet without a real
+  click, which is the classic banned automation pattern.
+- Tab switch, close/collapse, clear history, and chat input mode are all packet free.
+- The open question is whether the ban is about the **mechanism** (the generic click synthesis) or the
+  **purpose** (switching the active tab by any means). Toggle Chat suggests the specific leaf script 175
+  might be fine. Only RuneLite can confirm.
 
-Nothing beyond this. No auto-reply, no input-channel switching, no overlays.
+## The question posted to RuneLite
 
----
+Asked on the RuneLite Discord (plain summary):
+1. Is `runScript(175, 1, N)` on a keypress to switch the current tab ok, since Toggle Chat already uses
+   it to open to a chosen tab, or is the problem the purpose regardless of the call.
+2. If that script is off limits, is a pure `setVarcIntValue(CHAT_VIEW, N)` ok, or is tab switching not
+   allowed by any method.
+3. Separate from tabs, would a close/open toggle plus clear history plus a chat input mode bind be ok on
+   their own.
 
-## Config (settings panel) — use @ConfigSection for each group
-**Section: Tab hotkeys**
-- 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade.
+Links:
+- Rejected PR (closed): https://github.com/runelite/plugin-hub/pull/13356
+- Toggle Chat reference: https://github.com/MoreBuchus/buchus-plugins/blob/toggle-chat/src/main/java/com/togglechat/ToggleChatPlugin.java#L152
 
-**Section: Close chat**
-- 1 × `Keybind` — "Close chat".
-- 1 × `boolean closeOnRepeat` — default `true`. "Pressing the same tab's hotkey again closes the chat."
+## Next steps, decided by the Discord answer
 
-**Section: Chat filters (current tab)**
-- 3 × `Keybind` — "Show all", "Show friends", "Show none". Description should state these apply to the currently-shown tab.
+- **A) If `runScript(175, 1, N)` tab switching is allowed.** Replace `replayWidgetOp` and `replayTabOp`
+  with `client.runScript(175, 1, targetTab.tabIndex)`. For a plain switch, if the target equals the
+  current tab do nothing (in resizable mode that call would collapse). Keep filters dropped. Rebuild,
+  tag a new version, open a new hub PR that bumps `commit=`.
+- **B) If only close, clear, and mode are allowed (no tab switching at all).** Drop the 7 tab binds, the
+  3 filter binds, and cycle filter. Keep the close toggle (via runScript 175), clear history, chat input
+  mode and cycle mode. Rename and rescope honestly since it then overlaps Toggle Chat. Update
+  displayName, README, spec. Resubmit.
+- **C) If nothing programmatic is allowed.** Do not resubmit. Keep it as a personal sideloaded plugin.
+  It already works via the Bolt dev client.
 
-**Section: Clear history (current tab)**
-- 1 × `Keybind` — "Clear history". Applies to the currently-shown tab.
-- Optional `boolean confirmClearHistory` — default `false` (mirrors the game, which clears immediately). Consider offering it since a mis-pressed hotkey is easier to hit than a right-click menu, but keep it off by default. If you skip it in v1, note it under future ideas.
+## Where the code to change is
 
-**All keybinds default to `Keybind.NOT_SET`.** The user opts in. This is also the main defense against a bound key firing while typing (see gotchas). Kept the sections split (filters vs clear history) because clear history is destructive and shouldn't sit next to the harmless filter toggles.
+- `ChatTabHotkeysPlugin.java`: `replayWidgetOp()` and `replayTabOp()` are the single choke point (the
+  rejected primitive). `onFilterHotkey` / `applyFilter` / `onCycleFilterHotkey` / `filterOpIndices` are
+  the filter paths to drop. `applyChatMode()` and `onClearHistoryHotkey()` are already packet free and in
+  the accepted style, so they stay.
+- `ChatTabs.java`: `ChatTab` enum (widgetId, tabIndex 0..6), `FilterOp` labels.
+- `ChatTabHotkeysConfig.java`: three config sections and the keybinds.
 
----
+## Build, run, release (detail in CLAUDE.md)
 
-## Core logic
-State the plugin reads at press-time (read from game vars, not just internal tracking, so mouse clicks stay in sync):
-- `currentTab` — which tab is displayed.
-- `chatClosed` — whether the chatbox is collapsed/hidden.
+- Build with `./rl` (Docker JDK 11) because the host JDK is too new for RuneLite's Gradle.
+  `RUNELITE_GRADLE_CACHE=~/.cache/runelite-gradle ./rl build`.
+- You cannot build while the dev client is running (they share the project `.gradle` lock). Build in an
+  isolated copy or close the client first.
+- In game via Bolt dev mode. Turn it on or off by setting or nulling `runelite_launch_command` in Bolt's
+  `launcher.json` with Bolt closed. See the dev-mode notes.
+- Release plus hub PR steps are in CLAUDE.md under "Releasing".
 
-On a **tab** hotkey for `targetTab`:
-```
-if (chatClosed):            open chat; show targetTab
-else if (currentTab == targetTab && closeOnRepeat):  close chat
-else:                       show targetTab
-```
+## Note
 
-On the **close-chat** hotkey:
-```
-if (chatClosed): open chat (to last tab)
-else:            close chat
-```
-
-On a **filter** hotkey (Show all/friends/none) or **clear history**:
-```
-resolve the active tab's button widget
-if that tab supports the action:  invoke the corresponding menu op on it
-else:                             no-op
-(clear history: if confirmClearHistory, gate behind a confirm first)
-```
-
-Use the **Var Inspector** (dev tools) to find the client var holding the current chat tab and the one holding the collapsed state — watch which var changes as you click tabs / collapse the chat, then read via `client.getVarcIntValue(...)` / `client.getVarbitValue(...)`. Keep an internal "last tab" as a fallback for close→reopen.
-
----
-
-## RuneLite implementation notes
-
-### Scaffolding
-- Base it on the official example plugin template (generate a repo from it, or clone `runelite/example-plugin` and rename). Standard Gradle Java plugin project.
-- Also clone `runelite/runelite` (core client) into the workspace **for reference only** — grepping core plugins is the fastest way to confirm correct API usage and to find the chatbox widget/script/menu details below. Don't depend on it beyond the normal `runeLiteVersion`.
-- `build.gradle`: `runeLiteVersion = 'latest.release'`, Java 11 language level, **no third-party dependencies** (this plugin needs none, and new deps massively slow Plugin Hub review).
-- Standard pieces: `Plugin` subclass with `@PluginDescriptor`; `Config` interface; injected `Client`, `ClientThread`, `KeyManager`.
-
-### Hotkeys
-- Use `net.runelite.client.input.HotkeyListener` (one per bind, constructed with a `Supplier<Keybind>` pointing at the config getter). Register with `keyManager.registerKeyListener(...)` in `startUp()`, unregister in `shutDown()`.
-- All client-touching work runs on the client thread: `clientThread.invoke(() -> ...)`. Never call `runScript` / menu actions from the key event thread.
-
-### Switching tabs (left-click behavior)
-Replicate the tab button's click by running the widget's own CS2 listener — ID-stable, survives Jagex reshuffling script IDs:
-```java
-Widget tab = client.getWidget(CHATBOX_GROUP, tabChildId); // group 162 = chatbox; verify child IDs in inspector
-if (tab != null) {
-    Object[] listener = tab.getOnOpListener();      // fall back to getOnClickListener() if onOp is null
-    if (listener != null) {
-        client.createScriptEvent(listener).setSource(tab).run();
-    }
-}
-```
-You only need the **widget IDs of the 7 tab buttons** from the inspector. Fallback: `client.runScript(scriptId, tabIndex)` with the inspector-shown script + arg (less resilient — prefer the listener route).
-
-### Filter options + clear history (right-click menu ops)
-These are the tab button's right-click menu entries, not its left-click op — so replay a menu action rather than the onOp listener. Most reliable method:
-1. **Discovery:** temporarily log `MenuOptionClicked` events. Right-click a tab and pick each of Show all / Show friends / Show none / Clear history, recording `getMenuAction()`, `getId()` (the op identifier), `getParam0()`, `getParam1()` (packed widget id), and `getMenuOption()`. The op identifier for each filter should be consistent across the channel-type tabs.
-2. **Trigger** on the client thread: `client.menuAction(param0, param1, menuAction, id, -1, option, target)`, where `param1` is the **packed widget id of the currently-active tab's button** (compute it for whichever tab is showing) and `id`/`option` select the filter or clear action.
-3. Before firing, check the active tab actually offers that option (Game/All don't offer Show all/friends/none) and no-op otherwise.
-
-### Opening / closing (collapsing) the chat
-"Close the chat" = collapse the chatbox (meaningful in **resizable** mode). Same technique as tab switching: find the collapse/expand button widget in the inspector and run its `onOp`/`onClick` listener via `createScriptEvent`. Read collapsed state from the var you identified.
-
-### Don't fire while the user is typing
-A bound plain letter would otherwise trigger mid-message. Mitigate: defaults are unbound (already covered) + suggest function keys in descriptions + suppress hotkey handling when the chatbox is in text-entry mode (find that input var in the Var Inspector). Should-have, not just polish.
-
-### Fixed vs resizable mode
-Collapsing only applies in resizable mode. In fixed mode, degrade gracefully: tab switching and filter/clear actions still work; the close action (and same-tab-twice-closes) should no-op rather than error. Note this in the plugin description.
-
----
-
-## Discovery checklist (do this first, in-game)
-Launch with dev tools: `./gradlew run --args="--developer-mode"`. With the **Widget Inspector** and **Var Inspector** open:
-- [ ] Confirm the chatbox interface group id (expected 162) and record the **child id of each of the 7 tab buttons**.
-- [ ] For one tab button, confirm which listener is populated (`onOp` vs `onClick`); note the fallback script id + arg it fires.
-- [ ] Right-click a channel-type tab and, via a temporary `MenuOptionClicked` log, record the menu action / op id / params / option text for **Show all, Show friends, Show none, Clear history**.
-- [ ] Record the **collapse/expand button** widget id and its listener.
-- [ ] Find the vars for **current tab**, **collapsed state**, and **text-entry mode** (watch them change).
-
-Put all of these in one `Constants`/`ChatTabs` holder with comments citing where each came from, so future game updates are easy to re-verify.
-
----
-
-## Build & run
-- `./gradlew run` to launch RuneLite with the plugin loaded; iterate.
-- Verify all binds, `closeOnRepeat` on/off, filters + clear-history on each channel-type tab, no-op on Game/All, manual-click sync, and both display modes.
-
-## Plugin Hub submission (later)
-- Host the plugin in its own public GitHub repo (BSD 2-Clause).
-- Fork `runelite/plugin-hub`, add a file under `plugins/` named after the plugin with `repository=<repo>.git` and `commit=<40-char hash>`, open a PR, get CI green.
-- Compliance is a non-issue: this only automates UI actions (switching/filtering/closing tabs) the player can already do by hand — same category as Chat Filter / Chat History / Toggle Chat. No gameplay automation, no unfair info.
-
----
-
-## Optional future ideas (NOT v1 — listed so they aren't reinvented)
-- Per-tab filter binds (bind "set Public to friends" directly) — powerful but 28 combos; only if requested.
-- A single "cycle tabs" bind (next/previous).
-- A modifier-based scheme (hold Alt + 1–7) as an alternative to dedicated keys.
-- Optionally set the chat **input** channel when switching (off by default; changes game behavior).
-- `confirmClearHistory` guard, if not done in v1.
-
-## Definition of done (v1)
-- [ ] 7 tab binds + 1 close bind + 3 filter binds + 1 clear-history bind, all unbound by default, each working.
-- [ ] Same-tab-twice closes chat when `closeOnRepeat` on; no-op re-show when off.
-- [ ] Close bind toggles closed/open; reopens to last tab.
-- [ ] Tab bind while chat closed opens it on that tab.
-- [ ] Show all/friends/none and Clear history apply to the active tab; no-op on tabs that don't offer them (Game/All).
-- [ ] State stays correct after manual mouse clicks (reads game vars).
-- [ ] Doesn't fire while typing in chat.
-- [ ] No-ops gracefully in fixed mode; no exceptions.
-- [ ] No third-party dependencies; `runeLiteVersion = 'latest.release'`.
+This file replaced the original pre-build brief. That content is still in git history (commit
+`a541a4a`). The product spec now lives in `spec.md`.

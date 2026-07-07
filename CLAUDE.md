@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Status: v1 implemented (needs an in-game smoke test)
 
 The plugin is implemented and compiles/tests clean against the RuneLite client API. `spec.md` is the
-behaviour source of truth; `handoff.md` is the original background/discovery brief (now largely
-superseded — the ids it wanted from the Var Inspector were found as named `gameval` constants). No
-mandatory in-game discovery remains; a run-through only *confirms* the runtime assumptions listed at
-the bottom of this section.
+behaviour source of truth; `handoff.md` tracks the current project state (hub rejection, research
+findings, and the decision tree for what to do next). The original pre-build brief that `handoff.md`
+used to hold is in git history (commit `a541a4a`). No mandatory in-game discovery remains; a
+run-through only *confirms* the runtime assumptions listed at the bottom of this section.
 
 Source layout (package `com.chattabhotkeys`):
 - `ChatTabHotkeysConfig.java` — 4 `@ConfigSection`s (lower three `closedByDefault`), 11 keybinds. Tab
