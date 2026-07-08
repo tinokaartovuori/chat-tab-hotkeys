@@ -1,8 +1,7 @@
 # Chat Tab Hotkeys
 
-Keyboard control for the chat tabs. Switch tab, clear its history, and open or close the chatbox
-without reaching for the mouse. No automation and no overlays — everything is client-side and
-packet-free (nothing is sent to the game server).
+Keyboard control for the chat tabs — switch tab, clear its history, and open or close the chatbox
+without reaching for the mouse.
 
 ## Keys
 

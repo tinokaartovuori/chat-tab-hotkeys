@@ -27,8 +27,8 @@ import net.runelite.client.util.HotkeyListener;
 
 @PluginDescriptor(
 	name = "Chat Tab Hotkeys",
-	description = "Configurable hotkeys to switch and close chat tabs, clear history, and set chat mode",
-	tags = {"chat", "tab", "hotkey", "keybind", "clear", "mode"}
+	description = "Configurable hotkeys to switch, cycle, and close chat tabs, clear history, and set chat mode",
+	tags = {"chat", "tab", "hotkey", "keybind", "clear", "mode", "cycle"}
 )
 public class ChatTabHotkeysPlugin extends Plugin
 {
@@ -63,11 +63,20 @@ public class ChatTabHotkeysPlugin extends Plugin
 	private ChatTab lastTab = ChatTab.ALL;
 
 	/**
-	 * The mode the mode-cycle last tried to set, used to step past Group. Group (GIM) reverts the mode
-	 * var when the player isn't in a group, so reading the var back would land us before Group again and
-	 * trap the cycle; when our last step was Group we advance from Group's slot instead.
+	 * The mode the mode-cycle last tried to set. Used only to step past Group: Group (GIM) reverts the
+	 * mode var to the previous mode when the player isn't in a group, so without this the cycle would
+	 * read the reverted var and retry Group forever. When the last step was Group and the var still
+	 * holds {@link #groupRevertValue}, the cycle resumes from Group's slot and steps past it.
 	 */
 	private ChatMode lastCycledMode = null;
+
+	/**
+	 * The mode value the var held right before the cycle last wrote Group — i.e. the value Group reverts
+	 * to when the player isn't in a group. If the var later shows a <em>different</em> value the player
+	 * changed the mode themselves (e.g. the right-click "Set chat mode"), so the cycle drops the Group
+	 * step-past and resyncs to the var. {@code -1} when the last step wasn't Group.
+	 */
+	private int groupRevertValue = -1;
 
 	@Override
 	protected void startUp()
@@ -237,6 +246,7 @@ public class ChatTabHotkeysPlugin extends Plugin
 		// Clear the cycle's Group-step tracker: a direct mode change (the Set-mode binds) resets where
 		// the cycle resumes from. onCycleModeHotkey re-sets it right after calling this.
 		lastCycledMode = null;
+		groupRevertValue = -1;
 		client.setVarcIntValue(VarClientID.CHATBOX_MODE, mode.value);
 		client.runScript(ScriptID.CHAT_PROMPT_INIT);
 	}
@@ -244,10 +254,11 @@ public class ChatTabHotkeysPlugin extends Plugin
 	/**
 	 * Steps to the next selected chat input mode (game order, wrapping). Normally advances from the mode
 	 * the game var reports, so manual (right-click) changes stay in sync. The exception is Group: it
-	 * reverts the var when the player isn't in a GIM group, so if our last step set Group and the var no
-	 * longer shows it, we advance from Group's slot — stepping past it instead of retrying it forever.
-	 * If the resolved current mode isn't selected, it starts at the first selected mode. No-ops when the
-	 * selection is empty.
+	 * reverts the var when the player isn't in a GIM group, so if our last step set Group and the var
+	 * still holds the value it reverted to, we advance from Group's slot — stepping past it instead of
+	 * retrying it forever. If the player changed the mode themselves in between, the var shows a
+	 * different value and we resync to it. If the resolved current mode isn't selected, it starts at the
+	 * first selected mode. No-ops when the selection is empty.
 	 */
 	private void onCycleModeHotkey()
 	{
@@ -258,14 +269,22 @@ public class ChatTabHotkeysPlugin extends Plugin
 		}
 
 		int currentValue = client.getVarcIntValue(VarClientID.CHATBOX_MODE);
-		ChatMode current = lastCycledMode == ChatMode.GROUP && currentValue != ChatMode.GROUP.value
-			? ChatMode.GROUP
-			: ChatMode.byValue(currentValue);
+		// Step past Group only if our last step set Group and the var still holds the value Group
+		// reverted to. A different value means the player changed the mode themselves since, so read it
+		// straight from the var (keeps manual right-click changes in sync).
+		boolean groupReverted = lastCycledMode == ChatMode.GROUP
+			&& currentValue != ChatMode.GROUP.value
+			&& currentValue == groupRevertValue;
+		ChatMode current = groupReverted ? ChatMode.GROUP : ChatMode.byValue(currentValue);
 
 		int idx = current == null ? -1 : modes.indexOf(current);
 		ChatMode next = modes.get((idx + 1) % modes.size());
 		applyChatMode(next);
 		lastCycledMode = next;
+		if (next == ChatMode.GROUP)
+		{
+			groupRevertValue = currentValue;
+		}
 	}
 
 	/** The selected tabs for the tab cycle, always in game order (All..Trade) regardless of pick order. */
