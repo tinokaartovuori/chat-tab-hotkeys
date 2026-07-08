@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Cycle tab hotkey** — one bind steps through the chat tabs (wraps around; opens the chat if it is
+  collapsed), mirroring the existing Cycle mode bind.
+- **Configurable cycle sets** — a **"Tabs to cycle"** and a **"Modes to cycle"** multi-select list
+  (the RuneLite `Set<Enum>` widget, like World Hopper's filters) choose which tabs / input modes each
+  cycle steps through. Tabs default to all seven; modes default to Public / Channel / Clan / Guest clan
+  (Group left out, since the game resets it when you are not in a group ironman group). This replaces
+  the previously hardcoded mode-cycle set. Both lists live in the existing sections — no new sections
+  were added. If you do add Group to the mode list while not in a group, the cycle steps past it rather
+  than getting stuck.
+
 ## [1.1.0] - 2026-07-08
 
 ### Removed

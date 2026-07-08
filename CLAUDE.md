@@ -16,7 +16,10 @@ of this section.
 Source layout (package `com.chattabhotkeys`):
 - `ChatTabHotkeysConfig.java` — two `@ConfigSection`s ("Tab hotkeys, close & clear" and "Chat input
   mode"), keybinds. Tab binds default to `Ctrl+1..7`; `closeOnRepeat` (bool, default true) is a toggle;
-  close/clear and all mode binds default to `Keybind.NOT_SET`.
+  close/clear/cycle and all mode binds default to `Keybind.NOT_SET`. Cycle membership is a `Set<ChatTab>`
+  ("Tabs to cycle", default all seven) and `Set<ChatMode>` ("Modes to cycle", default
+  Public/Channel/Clan/Guest — Group left out) — the RuneLite multi-select `Set<Enum>` widget, same as
+  World Hopper's region filter. The enums override `toString()` for their list labels.
 - `ChatTabHotkeysPlugin.java` — hotkeys via `HotkeyListener`/`KeyManager`, all press-time logic on the
   client thread, real behaviour (no placeholders).
 - `ChatTabs.java` — `ChatTab` enum (tabIndex 0..6, per-tab `supportsClear` + `messageTypes`, and a
@@ -25,9 +28,10 @@ Source layout (package `com.chattabhotkeys`):
 ## What this plugin is
 
 **Chat Tab Hotkeys** (repo `chat-tab-hotkeys`) — configurable hotkeys for navigating the OSRS chat:
-7 tab binds (All, Game, Public, Private, Channel, Clan, Trade), a close-chat toggle (resizable mode),
-a clear-history bind (channel-type tabs only), and chat-input-mode binds (Public/Channel/Clan/Guest
-clan/Group, plus a Cycle-mode bind). It only automates UI actions the player can already do by mouse —
+7 tab binds (All, Game, Public, Private, Channel, Clan, Trade), a cycle-tab bind (steps through a
+configurable subset of tabs), a close-chat toggle (resizable mode), a clear-history bind (channel-type
+tabs only), and chat-input-mode binds (Public/Channel/Clan/Guest clan/Group, plus a Cycle-mode bind
+over a configurable subset of modes). It only automates UI actions the player can already do by mouse —
 no gameplay automation. Everything is packet-free / client-side.
 
 ## Build & run
@@ -97,8 +101,12 @@ language level, **no third-party dependencies**.
 - **Chat input mode** (which channel you type into) is *not* a widget op — set it the game's way:
   `client.setVarcIntValue(VarClientID.CHATBOX_MODE /*945*/, mode)` (0=Public,1=Channel,2=Clan,3=Guest,
   4=Group) then `client.runScript(ScriptID.CHAT_PROMPT_INIT /*223*/)` to redraw the input line.
-  `Cycle mode` rotates Public→Channel→Clan→Guest (Group is excluded and self-resets to the current mode
-  when the player isn't in a GIM group).
+  `Cycle mode` and `Cycle tab` step through a configurable membership set (the "Tabs to cycle" /
+  "Modes to cycle" `Set<Enum>` lists): read the current value from the game var, advance to the next
+  selected entry in game order (wrapping), no-op if the set is empty. Cyclability is config-driven, not
+  hardcoded on the enum. Group is left out of the default mode set; if selected while not in a GIM group
+  the game reverts the mode var, so the cycle keeps `lastCycledMode` and steps *past* Group (rather than
+  re-reading the reverted var and retrying Group forever).
 
 - **Clear history is native (no Chat History plugin dependency).** For the active tab's
   `ChatMessageType`s, drop every `MessageNode` from `client.getChatLineMap()` then

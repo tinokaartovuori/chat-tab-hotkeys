@@ -5,6 +5,7 @@ import com.chattabhotkeys.ChatTabs.ChatTab;
 import com.google.inject.Provides;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import net.runelite.api.ChatLineBuffer;
@@ -61,6 +62,13 @@ public class ChatTabHotkeysPlugin extends Plugin
 	/** Which tab to re-open to when the close hotkey expands a collapsed chat. */
 	private ChatTab lastTab = ChatTab.ALL;
 
+	/**
+	 * The mode the mode-cycle last tried to set, used to step past Group. Group (GIM) reverts the mode
+	 * var when the player isn't in a group, so reading the var back would land us before Group again and
+	 * trap the cycle; when our last step was Group we advance from Group's slot instead.
+	 */
+	private ChatMode lastCycledMode = null;
+
 	@Override
 	protected void startUp()
 	{
@@ -71,6 +79,8 @@ public class ChatTabHotkeysPlugin extends Plugin
 		register(config::tabChannel, () -> onTabHotkey(ChatTab.CHANNEL));
 		register(config::tabClan, () -> onTabHotkey(ChatTab.CLAN));
 		register(config::tabTrade, () -> onTabHotkey(ChatTab.TRADE));
+
+		register(config::cycleTab, this::onCycleTabHotkey);
 
 		register(config::closeChat, this::onCloseHotkey);
 		register(config::clearHistory, this::onClearHistoryHotkey);
@@ -145,6 +155,26 @@ public class ChatTabHotkeysPlugin extends Plugin
 		rememberCurrentTab();
 	}
 
+	/**
+	 * Steps to the next selected chat tab (game order, wrapping). Reads the shown tab from the game var so
+	 * mouse clicks stay in sync; when the chat is collapsed it resumes from {@link #lastTab}. If the shown
+	 * tab isn't in the selection it starts at the first selected tab. No-ops when the selection is empty.
+	 */
+	private void onCycleTabHotkey()
+	{
+		List<ChatTab> tabs = cyclableTabs();
+		if (tabs.isEmpty())
+		{
+			return;
+		}
+
+		ChatTab current = isChatClosed() ? lastTab : currentTab();
+		int idx = current == null ? -1 : tabs.indexOf(current);
+		ChatTab next = tabs.get((idx + 1) % tabs.size());
+		switchTab(next);
+		rememberCurrentTab();
+	}
+
 	private void onCloseHotkey()
 	{
 		if (isChatClosed())
@@ -204,34 +234,68 @@ public class ChatTabHotkeysPlugin extends Plugin
 	 */
 	private void applyChatMode(ChatMode mode)
 	{
+		// Clear the cycle's Group-step tracker: a direct mode change (the Set-mode binds) resets where
+		// the cycle resumes from. onCycleModeHotkey re-sets it right after calling this.
+		lastCycledMode = null;
 		client.setVarcIntValue(VarClientID.CHATBOX_MODE, mode.value);
 		client.runScript(ScriptID.CHAT_PROMPT_INIT);
 	}
 
+	/**
+	 * Steps to the next selected chat input mode (game order, wrapping). Normally advances from the mode
+	 * the game var reports, so manual (right-click) changes stay in sync. The exception is Group: it
+	 * reverts the var when the player isn't in a GIM group, so if our last step set Group and the var no
+	 * longer shows it, we advance from Group's slot — stepping past it instead of retrying it forever.
+	 * If the resolved current mode isn't selected, it starts at the first selected mode. No-ops when the
+	 * selection is empty.
+	 */
 	private void onCycleModeHotkey()
 	{
-		// The mode var is readable, so advance from the actual current mode. Skip Group (it would
-		// self-reset when not in a GIM group and trap the cycle), wrapping Public->..->Guest->Public.
-		int current = client.getVarcIntValue(VarClientID.CHATBOX_MODE);
-		ChatMode[] modes = ChatMode.values();
-		int start = 0;
-		for (int i = 0; i < modes.length; i++)
+		List<ChatMode> modes = cyclableModes();
+		if (modes.isEmpty())
 		{
-			if (modes[i].value == current)
+			return;
+		}
+
+		int currentValue = client.getVarcIntValue(VarClientID.CHATBOX_MODE);
+		ChatMode current = lastCycledMode == ChatMode.GROUP && currentValue != ChatMode.GROUP.value
+			? ChatMode.GROUP
+			: ChatMode.byValue(currentValue);
+
+		int idx = current == null ? -1 : modes.indexOf(current);
+		ChatMode next = modes.get((idx + 1) % modes.size());
+		applyChatMode(next);
+		lastCycledMode = next;
+	}
+
+	/** The selected tabs for the tab cycle, always in game order (All..Trade) regardless of pick order. */
+	private List<ChatTab> cyclableTabs()
+	{
+		Set<ChatTab> selected = config.cycleTabs();
+		List<ChatTab> tabs = new ArrayList<>();
+		for (ChatTab tab : ChatTab.values())
+		{
+			if (selected.contains(tab))
 			{
-				start = i + 1;
-				break;
+				tabs.add(tab);
 			}
 		}
-		for (int offset = 0; offset < modes.length; offset++)
+		return tabs;
+	}
+
+	/** The selected input modes for the mode cycle, always in game order (Public..Group). */
+	private List<ChatMode> cyclableModes()
+	{
+		Set<ChatMode> selected = config.cycleModes();
+		List<ChatMode> modes = new ArrayList<>();
+		for (ChatMode mode : ChatMode.values())
 		{
-			ChatMode mode = modes[(start + offset) % modes.length];
-			if (mode.cyclable)
+			if (selected.contains(mode))
 			{
-				applyChatMode(mode);
-				return;
+				modes.add(mode);
 			}
 		}
+		return modes;
 	}
 
 	// ----------------------------------------------------------------------

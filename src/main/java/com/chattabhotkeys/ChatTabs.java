@@ -1,5 +1,6 @@
 package com.chattabhotkeys;
 
+import java.util.Locale;
 import net.runelite.api.ChatMessageType;
 
 /**
@@ -64,31 +65,58 @@ final class ChatTabs
 			}
 			return null;
 		}
+
+		/** Title-cased label for the "Tabs to cycle" multi-select list (e.g. PUBLIC -> "Public"). */
+		@Override
+		public String toString()
+		{
+			String n = name();
+			return n.charAt(0) + n.substring(1).toLowerCase(Locale.ROOT);
+		}
 	}
 
 	/**
 	 * Chat input channel, i.e. which channel typed messages go to (the game's right-click
 	 * "Set chat mode" on the All tab). Set by writing {@code VarClientID.CHATBOX_MODE} to
 	 * {@link #value} and rerunning the chatbox-input build script. Group (GIM) auto-resets
-	 * to the current mode if the player is not in a group.
+	 * to the current mode if the player is not in a group, so it is left out of the default
+	 * "Modes to cycle" selection.
 	 */
 	enum ChatMode
 	{
-		PUBLIC(0, true),
-		CHANNEL(1, true),
-		CLAN(2, true),
-		GUEST(3, true),
-		// Excluded from the cycle: the game auto-resets it to the current mode when not in a
-		// group ironman group, which would trap the cycle. Still available as its own bind.
-		GROUP(4, false);
+		PUBLIC(0, "Public"),
+		CHANNEL(1, "Channel"),
+		CLAN(2, "Clan"),
+		GUEST(3, "Guest clan"),
+		GROUP(4, "Group");
 
 		final int value;
-		final boolean cyclable;
+		private final String label;
 
-		ChatMode(int value, boolean cyclable)
+		ChatMode(int value, String label)
 		{
 			this.value = value;
-			this.cyclable = cyclable;
+			this.label = label;
+		}
+
+		/** The mode whose {@link #value} equals {@code value}, or null if none. */
+		static ChatMode byValue(int value)
+		{
+			for (ChatMode mode : values())
+			{
+				if (mode.value == value)
+				{
+					return mode;
+				}
+			}
+			return null;
+		}
+
+		/** Label for the "Modes to cycle" multi-select list. */
+		@Override
+		public String toString()
+		{
+			return label;
 		}
 	}
 }

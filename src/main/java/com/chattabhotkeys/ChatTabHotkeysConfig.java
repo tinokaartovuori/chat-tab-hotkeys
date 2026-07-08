@@ -1,7 +1,11 @@
 package com.chattabhotkeys;
 
+import com.chattabhotkeys.ChatTabs.ChatMode;
+import com.chattabhotkeys.ChatTabs.ChatTab;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.EnumSet;
+import java.util.Set;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -118,6 +122,31 @@ public interface ChatTabHotkeysConfig extends Config
 		return Keybind.NOT_SET;
 	}
 
+	@ConfigItem(
+		keyName = "cycleTab",
+		name = "Cycle tab",
+		description = "Step to the next tab in the list below. Wraps around; opens the chat if it is closed.",
+		position = 10,
+		section = tabsSection
+	)
+	default Keybind cycleTab()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "cycleTabs",
+		name = "Tabs to cycle",
+		description = "The tabs the Cycle tab key steps through, in game order. Deselect to leave a tab out; "
+			+ "an empty list disables the cycle.",
+		position = 11,
+		section = tabsSection
+	)
+	default Set<ChatTab> cycleTabs()
+	{
+		return EnumSet.allOf(ChatTab.class);
+	}
+
 	// ------------------------------------------------------------------
 	// Chat input mode — which channel typed messages go to.
 	// ------------------------------------------------------------------
@@ -184,13 +213,26 @@ public interface ChatTabHotkeysConfig extends Config
 	@ConfigItem(
 		keyName = "cycleMode",
 		name = "Cycle mode",
-		description = "Cycle the chat input mode: Public, then Channel, then Clan, then Guest clan. "
-			+ "Group is excluded from the cycle (use its own bind).",
+		description = "Step to the next mode in the list below. Wraps around.",
 		position = 5,
 		section = modeSection
 	)
 	default Keybind cycleMode()
 	{
 		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "cycleModes",
+		name = "Modes to cycle",
+		description = "The chat input modes the Cycle mode key steps through, in game order. An empty list "
+			+ "disables the cycle. Group is left out by default: the game resets it to your current mode "
+			+ "when you are not in a group ironman group.",
+		position = 6,
+		section = modeSection
+	)
+	default Set<ChatMode> cycleModes()
+	{
+		return EnumSet.of(ChatMode.PUBLIC, ChatMode.CHANNEL, ChatMode.CLAN, ChatMode.GUEST);
 	}
 }
