@@ -1,8 +1,7 @@
 # Chat Tab Hotkeys — Specification
 
-Product spec for the plugin: **what it does and how it behaves**. Implementation notes, the in-game
-discovery checklist, and Plugin Hub submission steps live in [`handoff.md`](handoff.md); build and
-architecture guidance lives in [`CLAUDE.md`](CLAUDE.md).
+Product spec for the plugin: **what it does and how it behaves**. Build and architecture guidance,
+along with Plugin Hub submission steps, live in [`CLAUDE.md`](CLAUDE.md).
 
 ## Summary
 
@@ -81,7 +80,8 @@ dropdown lists (the RuneLite `Set<Enum>` widget, as used by World Hopper's filte
 
 - **State is read from game vars at press time** (current tab, collapsed state, text-entry mode), not
   from internal tracking — so the plugin stays correct after the player clicks tabs with the mouse. An
-  internal "last tab" is kept only as a fallback for close→reopen.
+  internal "last tab" is kept only as a fallback for the close→reopen and cycle-tab-when-collapsed
+  resume paths.
 - **Unsupported actions no-op silently.** Clear-history exists only on the channel-type tabs (Public,
   Private, Channel, Clan, Trade). Game and All don't offer it; pressing the clear hotkey while those
   are active does nothing (no error, no guessed target).
@@ -120,6 +120,5 @@ dropdown lists (the RuneLite `Set<Enum>` widget, as used by World Hopper's filte
 
 ## Explicitly out of scope for v1
 
-A clear-history confirmation prompt (`confirmClearHistory`). Listed in `handoff.md` under future ideas
-so it isn't reinvented. (Setting the chat **input** channel and a cycle-tabs bind, once future ideas,
-are now implemented — see "Cycle tab" and "Chat input mode".)
+A clear-history confirmation prompt (`confirmClearHistory`). (Setting the chat **input** channel and a
+cycle-tabs bind, once future ideas, are now implemented — see "Cycle tab" and "Chat input mode".)

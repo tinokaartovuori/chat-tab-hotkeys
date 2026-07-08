@@ -2,16 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: v1.1 reworked after hub rejection (needs an in-game smoke test)
+## Status: reworked after hub rejection, first hub release labelled v1.0.0 (needs an in-game smoke test)
 
-The plugin compiles/builds clean against the RuneLite client API. v1.0.0 was rejected by the Plugin
-Hub for a generic client-script click primitive; it has been reworked so tab switching is a plain
+The plugin compiles/builds clean against the RuneLite client API. An earlier build was rejected by the
+Plugin Hub for a generic client-script click primitive; it has been reworked so tab switching is a plain
 `setVarcIntValue(VarClientID.CHAT_VIEW)` write plus benign redraw procs (no widget-op replay, no
-`runScript(175)`), on branch `fix/remove-rejected-clientscript-primitive`, targeting v1.1.0. The
-chat-filter feature was **removed entirely** this round. `spec.md` is the behaviour source of truth;
-`handoff.md` tracks the current project state (rejection, the rework, and the next steps). No mandatory
-in-game discovery remains; a run-through only *confirms* the runtime assumptions listed at the bottom
-of this section.
+`runScript(175)`), on branch `fix/remove-rejected-clientscript-primitive`. The rejected build was never
+published, so the first hub release is labelled **v1.0.0**. The chat-filter feature was **removed
+entirely** this round. `spec.md` is the behaviour source of truth. No mandatory in-game discovery
+remains; a run-through only *confirms* the runtime assumptions listed at the bottom of this section.
 
 Source layout (package `com.chattabhotkeys`):
 - `ChatTabHotkeysConfig.java` — two `@ConfigSection`s ("Tab hotkeys, close & clear" and "Chat input
@@ -141,5 +140,4 @@ Release steps (SemVer: MAJOR breaking / MINOR feature / PATCH fix):
    `runelite-plugin.properties`.
 2. `git commit -m "chore: release vX.Y.Z"`, then `git tag -a vX.Y.Z -m "vX.Y.Z"`, `git push --follow-tags`.
    Optionally create a GitHub Release from the tag with the changelog section as notes.
-3. Update the hub manifest's `commit=` to that tagged commit via a branch + PR to `runelite/plugin-hub`
-   (see `handoff.md` → Plugin Hub submission).
+3. Update the hub manifest's `commit=` to that tagged commit via a branch + PR to `runelite/plugin-hub`.
