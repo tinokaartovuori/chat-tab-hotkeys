@@ -28,7 +28,7 @@ import net.runelite.client.util.HotkeyListener;
 @PluginDescriptor(
 	name = "Chat Tab Hotkeys",
 	description = "Configurable hotkeys to switch, cycle, and close chat tabs, clear history, and set chat mode",
-	tags = {"chat", "tab", "hotkey", "keybind", "clear", "mode", "cycle"}
+	tags = {"chat", "chatbox", "tab", "hotkey", "keybind", "shortcut", "switch", "cycle", "clear", "mode", "channel"}
 )
 public class ChatTabHotkeysPlugin extends Plugin
 {
