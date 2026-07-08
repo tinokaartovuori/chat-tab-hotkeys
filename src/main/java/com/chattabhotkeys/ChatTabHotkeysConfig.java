@@ -1,7 +1,11 @@
 package com.chattabhotkeys;
 
+import com.chattabhotkeys.ChatTabs.ChatMode;
+import com.chattabhotkeys.ChatTabs.ChatTab;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.EnumSet;
+import java.util.Set;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -13,30 +17,20 @@ public interface ChatTabHotkeysConfig extends Config
 {
 	String GROUP = "chattabhotkeys";
 
-	// ------------------------------------------------------------------
-	// Sections
-	// ------------------------------------------------------------------
 	@ConfigSection(
-		name = "Tab hotkeys & close chat",
-		description = "One hotkey per chat tab, plus closing the chat. Defaults are Ctrl+1–7; press a tab's hotkey again to close the chat. "
-			+ "Bind function keys or modifier combos so binds don't fire while typing.",
+		name = "Tab hotkeys, close & clear",
+		description = "One hotkey per chat tab, plus closing the chat and clearing a tab's history. Defaults are "
+			+ "Ctrl+1–7; press a tab's hotkey again to close the chat. Bind function keys or modifier combos so "
+			+ "binds don't fire while typing.",
 		position = 0
 	)
 	String tabsSection = "tabsSection";
 
 	@ConfigSection(
-		name = "Chat filters & clear history",
-		description = "Set the currently-shown tab's filter (like the right-click menu; no-ops on tabs that don't offer it) "
-			+ "or clear its history.",
-		position = 1
-	)
-	String filtersSection = "filtersSection";
-
-	@ConfigSection(
 		name = "Chat input mode",
 		description = "Set which channel your typed messages go to, like the right-click 'Set chat mode' on the All tab. "
 			+ "Group only works while you are in a group ironman group.",
-		position = 2
+		position = 1
 	)
 	String modeSection = "modeSection";
 
@@ -87,7 +81,7 @@ public interface ChatTabHotkeysConfig extends Config
 	}
 
 	// ------------------------------------------------------------------
-	// Close chat
+	// Close chat + clear history
 	// ------------------------------------------------------------------
 	@ConfigItem(
 		keyName = "closeOnRepeat",
@@ -116,107 +110,41 @@ public interface ChatTabHotkeysConfig extends Config
 		return Keybind.NOT_SET;
 	}
 
-	// ------------------------------------------------------------------
-	// Chat filters (current tab)
-	// ------------------------------------------------------------------
-	@ConfigItem(
-		keyName = "showAll",
-		name = "Show all",
-		description = "Set the currently-shown tab's filter to 'Show all'.",
-		position = 0,
-		section = filtersSection
-	)
-	default Keybind showAll()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
-		keyName = "showFriends",
-		name = "Show friends",
-		description = "Set the currently-shown tab's filter to 'Show friends'.",
-		position = 1,
-		section = filtersSection
-	)
-	default Keybind showFriends()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
-		keyName = "showNone",
-		name = "Show none",
-		description = "Set the currently-shown tab's filter to 'Show none'.",
-		position = 2,
-		section = filtersSection
-	)
-	default Keybind showNone()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
-		keyName = "showAutochat",
-		name = "Show autochat",
-		description = "Set the Public tab's filter to 'Show autochat'. Public tab only.",
-		position = 3,
-		section = filtersSection
-	)
-	default Keybind showAutochat()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
-		keyName = "showStandard",
-		name = "Show standard",
-		description = "Set the Public tab's filter to 'Show standard'. Public tab only.",
-		position = 4,
-		section = filtersSection
-	)
-	default Keybind showStandard()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
-		keyName = "hide",
-		name = "Hide",
-		description = "Set the Public tab's filter to 'Hide'. Public tab only.",
-		position = 5,
-		section = filtersSection
-	)
-	default Keybind hide()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
-		keyName = "cycleFilter",
-		name = "Cycle filter",
-		description = "Cycle the currently-shown tab's filter through the options it offers "
-			+ "(all/friends/none on most tabs, autochat/standard/friends/none/hide on Public).",
-		position = 6,
-		section = filtersSection
-	)
-	default Keybind cycleFilter()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	// ------------------------------------------------------------------
-	// Clear history (current tab)
-	// ------------------------------------------------------------------
 	@ConfigItem(
 		keyName = "clearHistory",
 		name = "Clear history",
-		description = "Clear the currently-shown tab's history.",
-		position = 7,
-		section = filtersSection
+		description = "Clear the currently-shown tab's history (no-op on the Game and All tabs).",
+		position = 9,
+		section = tabsSection
 	)
 	default Keybind clearHistory()
 	{
 		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "cycleTab",
+		name = "Cycle tab",
+		description = "Step to the next tab in the list below. Wraps around; opens the chat if it is closed.",
+		position = 10,
+		section = tabsSection
+	)
+	default Keybind cycleTab()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "cycleTabs",
+		name = "Tabs to cycle",
+		description = "The tabs the Cycle tab key steps through, in game order. Deselect to leave a tab out; "
+			+ "an empty list disables the cycle.",
+		position = 11,
+		section = tabsSection
+	)
+	default Set<ChatTab> cycleTabs()
+	{
+		return EnumSet.allOf(ChatTab.class);
 	}
 
 	// ------------------------------------------------------------------
@@ -285,13 +213,26 @@ public interface ChatTabHotkeysConfig extends Config
 	@ConfigItem(
 		keyName = "cycleMode",
 		name = "Cycle mode",
-		description = "Cycle the chat input mode: Public, then Channel, then Clan, then Guest clan. "
-			+ "Group is excluded from the cycle (use its own bind).",
+		description = "Step to the next mode in the list below. Wraps around.",
 		position = 5,
 		section = modeSection
 	)
 	default Keybind cycleMode()
 	{
 		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "cycleModes",
+		name = "Modes to cycle",
+		description = "The chat input modes the Cycle mode key steps through, in game order. An empty list "
+			+ "disables the cycle. Group is left out by default: the game resets it to your current mode "
+			+ "when you are not in a group ironman group.",
+		position = 6,
+		section = modeSection
+	)
+	default Set<ChatMode> cycleModes()
+	{
+		return EnumSet.of(ChatMode.PUBLIC, ChatMode.CHANNEL, ChatMode.CLAN, ChatMode.GUEST);
 	}
 }

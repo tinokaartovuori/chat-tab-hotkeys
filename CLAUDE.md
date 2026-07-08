@@ -2,28 +2,37 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: v1 implemented (needs an in-game smoke test)
+## Status: v1.1 reworked after hub rejection (needs an in-game smoke test)
 
-The plugin is implemented and compiles/tests clean against the RuneLite client API. `spec.md` is the
-behaviour source of truth; `handoff.md` tracks the current project state (hub rejection, research
-findings, and the decision tree for what to do next). The original pre-build brief that `handoff.md`
-used to hold is in git history (commit `a541a4a`). No mandatory in-game discovery remains; a
-run-through only *confirms* the runtime assumptions listed at the bottom of this section.
+The plugin compiles/builds clean against the RuneLite client API. v1.0.0 was rejected by the Plugin
+Hub for a generic client-script click primitive; it has been reworked so tab switching is a plain
+`setVarcIntValue(VarClientID.CHAT_VIEW)` write plus benign redraw procs (no widget-op replay, no
+`runScript(175)`), on branch `fix/remove-rejected-clientscript-primitive`, targeting v1.1.0. The
+chat-filter feature was **removed entirely** this round. `spec.md` is the behaviour source of truth;
+`handoff.md` tracks the current project state (rejection, the rework, and the next steps). No mandatory
+in-game discovery remains; a run-through only *confirms* the runtime assumptions listed at the bottom
+of this section.
 
 Source layout (package `com.chattabhotkeys`):
-- `ChatTabHotkeysConfig.java` — 4 `@ConfigSection`s (lower three `closedByDefault`), 11 keybinds. Tab
-  binds default to `Ctrl+1..7`; close/filters/clear default to `Keybind.NOT_SET`.
+- `ChatTabHotkeysConfig.java` — two `@ConfigSection`s ("Tab hotkeys, close & clear" and "Chat input
+  mode"), keybinds. Tab binds default to `Ctrl+1..7`; `closeOnRepeat` (bool, default true) is a toggle;
+  close/clear/cycle and all mode binds default to `Keybind.NOT_SET`. Cycle membership is a `Set<ChatTab>`
+  ("Tabs to cycle", default all seven) and `Set<ChatMode>` ("Modes to cycle", default
+  Public/Channel/Clan/Guest — Group left out) — the RuneLite multi-select `Set<Enum>` widget, same as
+  World Hopper's region filter. The enums override `toString()` for their list labels.
 - `ChatTabHotkeysPlugin.java` — hotkeys via `HotkeyListener`/`KeyManager`, all press-time logic on the
   client thread, real behaviour (no placeholders).
-- `ChatTabs.java` — `ChatTab` enum (widgetId/tabIndex/supports*/messageTypes) + `FilterOp` labels. All
-  ids are named constants; nothing to "fill in".
+- `ChatTabs.java` — `ChatTab` enum (tabIndex 0..6, per-tab `supportsClear` + `messageTypes`, and a
+  `byTabIndex(int)` lookup) + `ChatMode` enum (input channels: Public/Channel/Clan/Guest/Group).
 
 ## What this plugin is
 
-**Chat Tab Hotkeys** (repo `chat-tab-hotkeys`) — configurable hotkeys for navigating and filtering
-the OSRS chat: 7 tab binds (All, Game, Public, Private, Channel, Clan, Trade), 1 close-chat toggle,
-3 filter binds (Show all/friends/none) acting on the *currently-viewed* tab, and 1 clear-history
-bind. It only automates UI actions the player can already do by mouse — no gameplay automation.
+**Chat Tab Hotkeys** (repo `chat-tab-hotkeys`) — configurable hotkeys for navigating the OSRS chat:
+7 tab binds (All, Game, Public, Private, Channel, Clan, Trade), a cycle-tab bind (steps through a
+configurable subset of tabs), a close-chat toggle (resizable mode), a clear-history bind (channel-type
+tabs only), and chat-input-mode binds (Public/Channel/Clan/Guest clan/Group, plus a Cycle-mode bind
+over a configurable subset of modes). It only automates UI actions the player can already do by mouse —
+no gameplay automation. Everything is packet-free / client-side.
 
 ## Build & run
 
@@ -65,42 +74,53 @@ language level, **no third-party dependencies**.
 
 ## Architecture that isn't obvious from the code
 
-- **Read state from game vars/widgets, not internal tracking.** At press time: current tab =
-  `client.getVarcIntValue(VarClientID.CHAT_VIEW)` mapped by `ChatTab.tabIndex`; chat closed =
-  `client.isResized() && Chatbox.CHATAREA` hidden; typing = `getVarcIntValue(VarClientID.MESLAYERMODE)
-  != InputType.NONE`. This keeps the plugin in sync when the player clicks tabs with the mouse. An
-  internal `lastTab` is kept only for close→reopen.
+- **Read state from game vars, not internal tracking.** At press time: current tab =
+  `client.getVarcIntValue(VarClientID.CHAT_VIEW)` mapped by `ChatTab.byTabIndex`; chat closed =
+  `client.isResized() && CHAT_VIEW == 1337` (the collapse sentinel). This keeps the plugin in sync when
+  the player clicks tabs with the mouse. An internal `lastTab` is kept only for close→reopen.
 
 - **Thread discipline.** `HotkeyListener`s fire on the key-event thread; the shared dispatch wraps
-  every action in `clientThread.invoke(...)` (and applies the typing gate there). Never touch the
+  every action in `clientThread.invoke(...)` (and applies the logged-in gate there). Never touch the
   client off that thread.
 
-- **Two mechanisms for tab actions (both ID-stable — no hardcoded script/op numbers):**
-  - *Switch / open / close a tab* → replay the tab button's own left-click op (`SWITCH_TAB_OP = 1`):
-    `client.createScriptEventBuilder(button.getOnOpListener()).setOp(1).setSource(button).build().run()`.
-    In resizable mode, op-1 on the *active* tab natively collapses the chat, which is how close/toggle
-    works; in fixed mode it just re-selects, so close actions no-op.
-  - *Filters* → resolve the op index at runtime by matching the tab button's `getActions()` by label
-    suffix, then replay `.setOp(i+1)`. Individual binds match one label (`FilterOp`); `Cycle filter`
-    detects all filter ops on the button (label starts with "show" or is "hide") and rotates among
-    them, so it adapts per tab (3 on most, 5 on Public). Absent label → silent no-op.
+- **Tab switch / open is a varc write + redraw (packet-free), not a widget op.** Switch / open a tab
+  calls `client.setVarcIntValue(VarClientID.CHAT_VIEW, tab.tabIndex)` (the varc the game itself holds
+  for the active tab), then `client.runScript(183 /*chat_alert_set*/, tab.tabIndex, 0)` to clear the
+  tab's unread flash, then `redrawChat()`. `redrawChat()` runs three benign client-side repaint procs —
+  `runScript(923 /*toplevel_chatbox_background*/)`, `runScript(178 /*redraw_chat_buttons*/)`, and
+  `runScript(ScriptID.BUILD_CHATBOX)` — because `setVarcIntValue` alone doesn't repaint. None of 178 /
+  923 / 183 have a `ScriptID` constant, hence the literals; all are pure redraw procs (no packet, no
+  server-persisted state). The earlier `runScript(175)` leaf-script call and the
+  `replayWidgetOp`/`replayTabOp` primitive (`getOnOpListener()` + `createScriptEventBuilder`) — the
+  generic "click any widget" call the Plugin Hub rejected (PR #13356) — are both **removed**.
+
+- **Close / collapse (resizable mode only).** `client.setVarcIntValue(VarClientID.CHAT_VIEW, 1337)`
+  (the collapse sentinel) + `redrawChat()`. `isChatClosed` = `isResized() && CHAT_VIEW == 1337`. In
+  fixed mode there is no collapse, so close actions no-op. Reopen restores `lastTab`.
 
 - **Chat input mode** (which channel you type into) is *not* a widget op — set it the game's way:
   `client.setVarcIntValue(VarClientID.CHATBOX_MODE /*945*/, mode)` (0=Public,1=Channel,2=Clan,3=Guest,
   4=Group) then `client.runScript(ScriptID.CHAT_PROMPT_INIT /*223*/)` to redraw the input line.
+  `Cycle mode` and `Cycle tab` step through a configurable membership set (the "Tabs to cycle" /
+  "Modes to cycle" `Set<Enum>` lists): read the current value from the game var, advance to the next
+  selected entry in game order (wrapping), no-op if the set is empty. Cyclability is config-driven, not
+  hardcoded on the enum. Group is left out of the default mode set; if selected while not in a GIM group
+  the game reverts the mode var, so the cycle keeps `lastCycledMode` and steps *past* Group (rather than
+  re-reading the reverted var and retrying Group forever).
 
 - **Clear history is native (no Chat History plugin dependency).** For the active tab's
   `ChatMessageType`s, drop every `MessageNode` from `client.getChatLineMap()` then
   `client.runScript(ScriptID.SPLITPM_CHANGED)`. Ported from core `ChatHistoryPlugin` +
   `ChatboxTab` (the message-type arrays live in `ChatTabs.ChatTab.messageTypes`).
 
-- **Silent no-ops, not errors.** Unsupported action on the active tab (Game/All don't offer filters or
-  clear) → no-op via the `supportsFilters`/`supportsClear` flags. Fixed mode → close actions no-op.
+- **Silent no-ops, not errors.** Clear on a tab without history (Game/All) → no-op via the
+  `supportsClear` flag. Fixed mode → close actions no-op. Not logged in → all actions no-op.
 
-- **Runtime assumptions to confirm in a smoke test** (graceful no-op if wrong): op index `1` is the tab
-  left-click op; the "Show …" labels appear in each channel tab's `getActions()`; `CHATAREA.isHidden()`
-  tracks the collapse. Fallback if any differs: Toggle Chat's `client.runScript(175, 1, tabIndex)` and
-  a one-time `MenuOptionClicked` log for filter op ids.
+- **Runtime assumptions to confirm in a smoke test** (graceful no-op if wrong): writing
+  `VarClientID.CHAT_VIEW = N` + the redraw procs switches to tab N; `CHAT_VIEW == 1337` collapses the
+  chat in resizable mode; clearing `getChatLineMap()` nodes + `SPLITPM_CHANGED` removes the tab's
+  history; setting `CHATBOX_MODE` + `CHAT_PROMPT_INIT` changes the input channel. None of these persist
+  across relog/world-hop (confirms client-side, no packet).
 
 ## Releasing
 
