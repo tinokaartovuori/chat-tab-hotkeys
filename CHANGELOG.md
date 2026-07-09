@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-09
+
+### Added
+- **Per-tab clear-history hotkeys** — a separate **Clear: Public / Private / Channel / Clan / Trade**
+  bind for each clearable tab, clearing that tab's history without switching to it (e.g. clear the
+  friends chat while viewing another tab). No tab switch, no chat open/close.
+
+### Changed
+- The existing clear-history hotkey is renamed **Clear current tab** and moved into a new **Clear
+  history** settings section (its saved bind is preserved). The former "Tab hotkeys, close & clear"
+  section is now **Tab hotkeys & close**.
+
 ## [1.0.0] - 2026-07-08
 
 Initial Plugin Hub release.
@@ -32,4 +44,5 @@ Initial Plugin Hub release.
 Everything is packet-free and client-side: tab switching writes `VarClientID.CHAT_VIEW` and runs benign
 redraw procedures; no server-persisted state, no gameplay automation.
 
+[1.1.0]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.1.0
 [1.0.0]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.0.0

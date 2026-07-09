@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: reworked after hub rejection, first hub release labelled v1.0.0 (needs an in-game smoke test)
+## Status: v1.1.0 tagged on `release/v1.1.0` (per-tab clear hotkeys — smoke-tested in-game via Bolt); hub manifest bump pending
 
 The plugin compiles/builds clean against the RuneLite client API. An earlier build was rejected by the
 Plugin Hub for a generic client-script click primitive; it has been reworked so tab switching is a plain
@@ -13,9 +13,12 @@ entirely** this round. `spec.md` is the behaviour source of truth. No mandatory 
 remains; a run-through only *confirms* the runtime assumptions listed at the bottom of this section.
 
 Source layout (package `com.chattabhotkeys`):
-- `ChatTabHotkeysConfig.java` — two `@ConfigSection`s ("Tab hotkeys, close & clear" and "Chat input
-  mode"), keybinds. Tab binds default to `Ctrl+1..7`; `closeOnRepeat` (bool, default true) is a toggle;
-  close/clear/cycle and all mode binds default to `Keybind.NOT_SET`. Cycle membership is a `Set<ChatTab>`
+- `ChatTabHotkeysConfig.java` — three `@ConfigSection`s ("Tab hotkeys & close", "Clear history", and
+  "Chat input mode"), keybinds. Tab binds default to `Ctrl+1..7`; `closeOnRepeat` (bool, default true)
+  is a toggle; close/clear/cycle and all mode binds default to `Keybind.NOT_SET`. The "Clear history"
+  section holds `clearHistory` ("Clear current tab") plus one bind per clearable tab (`clearPublic`,
+  `clearPrivate`, `clearChannel`, `clearClan`, `clearTrade` → "Clear: X"). `clearHistory` keeps its
+  keyName from v1.0.0 so saved binds survive the rename/move. Cycle membership is a `Set<ChatTab>`
   ("Tabs to cycle", default all seven) and `Set<ChatMode>` ("Modes to cycle", default
   Public/Channel/Clan/Guest — Group left out) — the RuneLite multi-select `Set<Enum>` widget, same as
   World Hopper's region filter. The enums override `toString()` for their list labels.
@@ -28,8 +31,9 @@ Source layout (package `com.chattabhotkeys`):
 
 **Chat Tab Hotkeys** (repo `chat-tab-hotkeys`) — configurable hotkeys for navigating the OSRS chat:
 7 tab binds (All, Game, Public, Private, Channel, Clan, Trade), a cycle-tab bind (steps through a
-configurable subset of tabs), a close-chat toggle (resizable mode), a clear-history bind (channel-type
-tabs only), and chat-input-mode binds (Public/Channel/Clan/Guest clan/Group, plus a Cycle-mode bind
+configurable subset of tabs), a close-chat toggle (resizable mode), clear-history binds (a "current tab"
+bind plus one per channel-type tab, which clears that tab without switching to it), and chat-input-mode
+binds (Public/Channel/Clan/Guest clan/Group, plus a Cycle-mode bind
 over a configurable subset of modes). It only automates UI actions the player can already do by mouse —
 no gameplay automation. Everything is packet-free / client-side.
 
@@ -107,10 +111,13 @@ language level, **no third-party dependencies**.
   the game reverts the mode var, so the cycle keeps `lastCycledMode` and steps *past* Group (rather than
   re-reading the reverted var and retrying Group forever).
 
-- **Clear history is native (no Chat History plugin dependency).** For the active tab's
-  `ChatMessageType`s, drop every `MessageNode` from `client.getChatLineMap()` then
-  `client.runScript(ScriptID.SPLITPM_CHANGED)`. Ported from core `ChatHistoryPlugin` +
-  `ChatboxTab` (the message-type arrays live in `ChatTabs.ChatTab.messageTypes`).
+- **Clear history is native (no Chat History plugin dependency).** `clearTab(ChatTab)` takes the target
+  tab: for its `ChatMessageType`s, drop every `MessageNode` from `client.getChatLineMap()` then
+  `client.runScript(ScriptID.SPLITPM_CHANGED)`. Ported from core `ChatHistoryPlugin` + `ChatboxTab` (the
+  message-type arrays live in `ChatTabs.ChatTab.messageTypes`). The "Clear current tab" bind passes
+  `currentTab()`; the per-tab binds pass a fixed constant, so they clear without touching `CHAT_VIEW`
+  (no switch, works while the chat is collapsed). The single `tab == null || !supportsClear` guard in
+  `clearTab` covers both paths.
 
 - **Silent no-ops, not errors.** Clear on a tab without history (Game/All) → no-op via the
   `supportsClear` flag. Fixed mode → close actions no-op. Not logged in → all actions no-op.
@@ -135,9 +142,29 @@ Model to follow: [`melkypie/resource-packs`](https://github.com/melkypie/resourc
 tags + GitHub Releases + `CHANGELOG.md`. Commit style is Conventional Commits; **no** Claude
 co-author trailer.
 
+### Version-management model (standing policy)
+
+Each version is prepared on a **`release/vX.Y.Z` branch off `main`**, then merged to `main` via a PR.
+
+> **Never squash- or rebase-merge a release branch.** The hub pins a commit *hash*; squash/rebase
+> rewrites it, orphaning the tagged commit so `commit=` would point at a hash that isn't in `main`'s
+> history. Merge with a **merge commit** (GitHub "Create a merge commit") or a **fast-forward** only —
+> both keep the tagged release commit reachable on `main`.
+
+The hub `commit=` always pins the **`vX.Y.Z`-tagged release commit**, which lives on `main`'s history
+after the (non-squash) merge. So: merge to `main` first, then point the hub at that tag's hash.
+
 Release steps (SemVer: MAJOR breaking / MINOR feature / PATCH fix):
-1. Move `CHANGELOG.md` `[Unreleased]` items under a new `## [x.y.z]` heading; set `version=x.y.z` in
-   `runelite-plugin.properties`.
-2. `git commit -m "chore: release vX.Y.Z"`, then `git tag -a vX.Y.Z -m "vX.Y.Z"`, `git push --follow-tags`.
-   Optionally create a GitHub Release from the tag with the changelog section as notes.
-3. Update the hub manifest's `commit=` to that tagged commit via a branch + PR to `runelite/plugin-hub`.
+1. On `release/vX.Y.Z`: implement the change (Conventional Commits, **no** Claude co-author trailer),
+   then in a final `chore: release vX.Y.Z` commit move `CHANGELOG.md` `[Unreleased]` items under a new
+   `## [x.y.z] - <date>` heading (+ link ref) and set `version=x.y.z` in `runelite-plugin.properties`.
+2. `git tag -a vX.Y.Z -m "vX.Y.Z"` on that release commit; push the branch + tag
+   (`git push -u origin release/vX.Y.Z --follow-tags`).
+3. Open a PR `release/vX.Y.Z` → `main` and merge it **with a merge commit (not squash/rebase)**, so the
+   tagged commit stays reachable on `main`. Optionally create a GitHub Release from the tag with the
+   changelog section as notes.
+4. Point the hub manifest's `commit=` (and `version=`) at the tagged release commit via a PR to
+   `runelite/plugin-hub`. **While the plugin's first submission PR is still unreviewed, update that same
+   open PR** (push to its head branch) instead of opening a new one — the plugin then first publishes at
+   the newer version, skipping the unpublished earlier one. Once the plugin is live on the hub, each
+   later version is its own hub PR that bumps `commit=`.

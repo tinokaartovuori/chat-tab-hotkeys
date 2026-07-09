@@ -44,11 +44,18 @@ filter), defaulting to all seven selected. Behaviour:
 - Closed → open (to the last shown tab).
 - Open → close.
 
-### 4. Clear history — one hotkey
-Clears the **currently-viewed** tab's history, like the right-click "Clear history" entry. Implemented
-natively (drops the tab's chat lines and rebuilds the chatbox) — no dependency on the Chat History
-plugin. Works on the channel-type tabs (Public, Private, Channel, Clan, Trade); no-ops on Game/All. No
-confirmation in v1 (see out of scope).
+### 4. Clear history — one bind for the current tab, plus one per tab
+Clears a tab's history, like the right-click "Clear history" entry. Implemented natively (drops the
+tab's chat lines and rebuilds the chatbox) — no dependency on the Chat History plugin. Two ways to bind:
+
+- **Clear current tab** — clears the **currently-viewed** tab.
+- **Clear: Public / Private / Channel / Clan / Trade** — one bind per channel-type tab; clears that
+  tab's history **without switching to it** (so you can clear the friends chat while viewing another
+  tab). No tab switch, no chat open/close.
+
+All clear binds work only on the channel-type tabs (Public, Private, Channel, Clan, Trade); Game and
+All have no history to clear, so "Clear current tab" no-ops there (the per-tab binds only exist for the
+five clearable tabs). No confirmation (see out of scope).
 
 ### 5. Chat input mode — sets the channel you type into
 Hotkeys for `Public`, `Channel`, `Clan`, `Guest clan`, `Group`, matching the game's right-click
@@ -66,11 +73,12 @@ it just tried Group, so the reverted var doesn't trap the cycle). Empty selectio
 
 ## Configuration
 
-Settings panel, two always-visible `@ConfigSection`s:
+Settings panel, three always-visible `@ConfigSection`s:
 
 | Section | Items |
 | --- | --- |
-| **Tab hotkeys, close & clear** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade (default `Ctrl+1..7`); `boolean closeOnRepeat` (default **true**); 1 × `Keybind` "Close chat"; 1 × `Keybind` "Clear history"; 1 × `Keybind` "Cycle tab"; `Set<ChatTab>` "Tabs to cycle" (default all seven) |
+| **Tab hotkeys & close** | 7 × `Keybind` — All, Game, Public, Private, Channel, Clan, Trade (default `Ctrl+1..7`); `boolean closeOnRepeat` (default **true**); 1 × `Keybind` "Close chat"; 1 × `Keybind` "Cycle tab"; `Set<ChatTab>` "Tabs to cycle" (default all seven) |
+| **Clear history** | 1 × `Keybind` "Clear current tab"; 5 × `Keybind` "Clear: Public / Private / Channel / Clan / Trade" (all unbound) |
 | **Chat input mode** | 5 × `Keybind` — Set mode: Public, Channel, Clan, Guest clan, Group; 1 × `Keybind` "Cycle mode"; `Set<ChatMode>` "Modes to cycle" (default Public/Channel/Clan/Guest clan) |
 
 Both sections render expanded (no `closedByDefault`). The two "to cycle" items render as multi-select
@@ -94,11 +102,11 @@ dropdown lists (the RuneLite `Set<Enum>` widget, as used by World Hopper's filte
 
 ## Definition of done (v1)
 
-- [ ] 7 tab binds (default `Ctrl+1..7`) + 1 close bind + 1 clear-history bind (rest unbound), each working.
+- [ ] 7 tab binds (default `Ctrl+1..7`) + 1 close bind + a "Clear current tab" bind + 5 per-tab "Clear: X" binds (rest unbound), each working.
 - [ ] Same-tab-twice closes the chat when `closeOnRepeat` on; re-shows (no-op) when off.
 - [ ] Close bind toggles closed/open; reopens to the last tab.
 - [ ] Tab bind while chat closed opens it on that tab.
-- [ ] Clear history applies to the active tab; no-ops on tabs that don't offer it (Game/All).
+- [ ] "Clear current tab" applies to the active tab; the per-tab "Clear: X" binds clear their tab without switching to it; both no-op on tabs that don't offer it (Game/All).
 - [ ] Chat input mode binds set the channel you type into; Cycle mode steps through the selected modes.
 - [ ] Cycle tab steps through the selected tabs (wrapping); opens the chat on the next tab when collapsed; no-ops with an empty selection.
 - [ ] The "Tabs to cycle" / "Modes to cycle" lists actually narrow their respective cycles.
