@@ -142,9 +142,29 @@ Model to follow: [`melkypie/resource-packs`](https://github.com/melkypie/resourc
 tags + GitHub Releases + `CHANGELOG.md`. Commit style is Conventional Commits; **no** Claude
 co-author trailer.
 
+### Version-management model (standing policy)
+
+Each version is prepared on a **`release/vX.Y.Z` branch off `main`**, then merged to `main` via a PR.
+
+> **Never squash- or rebase-merge a release branch.** The hub pins a commit *hash*; squash/rebase
+> rewrites it, orphaning the tagged commit so `commit=` would point at a hash that isn't in `main`'s
+> history. Merge with a **merge commit** (GitHub "Create a merge commit") or a **fast-forward** only —
+> both keep the tagged release commit reachable on `main`.
+
+The hub `commit=` always pins the **`vX.Y.Z`-tagged release commit**, which lives on `main`'s history
+after the (non-squash) merge. So: merge to `main` first, then point the hub at that tag's hash.
+
 Release steps (SemVer: MAJOR breaking / MINOR feature / PATCH fix):
-1. Move `CHANGELOG.md` `[Unreleased]` items under a new `## [x.y.z]` heading; set `version=x.y.z` in
-   `runelite-plugin.properties`.
-2. `git commit -m "chore: release vX.Y.Z"`, then `git tag -a vX.Y.Z -m "vX.Y.Z"`, `git push --follow-tags`.
-   Optionally create a GitHub Release from the tag with the changelog section as notes.
-3. Update the hub manifest's `commit=` to that tagged commit via a branch + PR to `runelite/plugin-hub`.
+1. On `release/vX.Y.Z`: implement the change (Conventional Commits, **no** Claude co-author trailer),
+   then in a final `chore: release vX.Y.Z` commit move `CHANGELOG.md` `[Unreleased]` items under a new
+   `## [x.y.z] - <date>` heading (+ link ref) and set `version=x.y.z` in `runelite-plugin.properties`.
+2. `git tag -a vX.Y.Z -m "vX.Y.Z"` on that release commit; push the branch + tag
+   (`git push -u origin release/vX.Y.Z --follow-tags`).
+3. Open a PR `release/vX.Y.Z` → `main` and merge it **with a merge commit (not squash/rebase)**, so the
+   tagged commit stays reachable on `main`. Optionally create a GitHub Release from the tag with the
+   changelog section as notes.
+4. Point the hub manifest's `commit=` (and `version=`) at the tagged release commit via a PR to
+   `runelite/plugin-hub`. **While the plugin's first submission PR is still unreviewed, update that same
+   open PR** (push to its head branch) instead of opening a new one — the plugin then first publishes at
+   the newer version, skipping the unpublished earlier one. Once the plugin is live on the hub, each
+   later version is its own hub PR that bumps `commit=`.
