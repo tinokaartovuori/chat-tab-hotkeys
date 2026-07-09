@@ -102,11 +102,11 @@ dropdown lists (the RuneLite `Set<Enum>` widget, as used by World Hopper's filte
 
 ## Definition of done (v1)
 
-- [ ] 7 tab binds (default `Ctrl+1..7`) + 1 close bind + 1 clear-history bind (rest unbound), each working.
+- [ ] 7 tab binds (default `Ctrl+1..7`) + 1 close bind + a "Clear current tab" bind + 5 per-tab "Clear: X" binds (rest unbound), each working.
 - [ ] Same-tab-twice closes the chat when `closeOnRepeat` on; re-shows (no-op) when off.
 - [ ] Close bind toggles closed/open; reopens to the last tab.
 - [ ] Tab bind while chat closed opens it on that tab.
-- [ ] Clear history applies to the active tab; no-ops on tabs that don't offer it (Game/All).
+- [ ] "Clear current tab" applies to the active tab; the per-tab "Clear: X" binds clear their tab without switching to it; both no-op on tabs that don't offer it (Game/All).
 - [ ] Chat input mode binds set the channel you type into; Cycle mode steps through the selected modes.
 - [ ] Cycle tab steps through the selected tabs (wrapping); opens the chat on the next tab when collapsed; no-ops with an empty selection.
 - [ ] The "Tabs to cycle" / "Modes to cycle" lists actually narrow their respective cycles.
