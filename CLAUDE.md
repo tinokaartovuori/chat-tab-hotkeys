@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: v1.0.0 on the hub; v1.1.0 in progress on `release/v1.1.0` (per-tab clear hotkeys — needs an in-game smoke test)
+## Status: v1.1.0 tagged on `release/v1.1.0` (per-tab clear hotkeys — smoke-tested in-game via Bolt); hub manifest bump pending
 
 The plugin compiles/builds clean against the RuneLite client API. An earlier build was rejected by the
 Plugin Hub for a generic client-script click primitive; it has been reworked so tab switching is a plain
