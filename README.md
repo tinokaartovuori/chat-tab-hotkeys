@@ -12,8 +12,10 @@ without reaching for the mouse.
   cycle" list in the settings picks which tabs it steps through (all of them by default), so you can
   cycle just Public, Channel and Clan if that is all you use.
 - **Close chat**: toggles the chatbox and reopens to the last tab. Works in resizable mode only.
-- **Clear history**: clears the current tab's messages. It does this directly, so no other plugin is
-  needed. Works on the Public, Private, Channel, Clan and Trade tabs; it does nothing on Game or All.
+- **Clear history**: clears a tab's messages directly, so no other plugin is needed. **Clear current
+  tab** clears whichever tab is shown; a separate **Clear: Public / Private / Channel / Clan / Trade**
+  key clears that tab without switching to it (handy for wiping the friends chat while you read
+  another tab). Works on the Public, Private, Channel, Clan and Trade tabs; it does nothing on Game or All.
 - **Chat input mode**: sets which channel you type into (Public, Channel, Clan, Guest clan, Group),
   the same as the right-click "Set chat mode" on the All tab. Group only works while you are in a group
   ironman group. A **Cycle mode** key steps through a "Modes to cycle" list (Public, Channel, Clan and
@@ -25,10 +27,11 @@ Only the tab keys are bound out of the box. Bind the rest in the settings if you
 
 <img src="docs/settings.png" alt="Chat Tab Hotkeys settings panel" width="240">
 
-There are two groups. The first holds the tab keys, close on repeat, close chat, clear history, the
-Cycle tab key and its "Tabs to cycle" list; the second holds the chat input modes, the Cycle mode key
-and its "Modes to cycle" list. The two "to cycle" settings are drop-down lists you pick from. The
-Ctrl+number defaults are safe to leave on, since modifier combos do not leak into a chat message.
+There are three groups. The first holds the tab keys, close on repeat, close chat, the Cycle tab key
+and its "Tabs to cycle" list; the second holds the clear-history keys (Clear current tab plus the five
+per-tab keys); the third holds the chat input modes, the Cycle mode key and its "Modes to cycle" list.
+The two "to cycle" settings are drop-down lists you pick from. The Ctrl+number defaults are safe to
+leave on, since modifier combos do not leak into a chat message.
 
 ## Notes
 

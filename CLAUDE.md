@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Status: reworked after hub rejection, first hub release labelled v1.0.0 (needs an in-game smoke test)
+## Status: v1.0.0 on the hub; v1.1.0 in progress on `release/v1.1.0` (per-tab clear hotkeys — needs an in-game smoke test)
 
 The plugin compiles/builds clean against the RuneLite client API. An earlier build was rejected by the
 Plugin Hub for a generic client-script click primitive; it has been reworked so tab switching is a plain
@@ -13,9 +13,12 @@ entirely** this round. `spec.md` is the behaviour source of truth. No mandatory 
 remains; a run-through only *confirms* the runtime assumptions listed at the bottom of this section.
 
 Source layout (package `com.chattabhotkeys`):
-- `ChatTabHotkeysConfig.java` — two `@ConfigSection`s ("Tab hotkeys, close & clear" and "Chat input
-  mode"), keybinds. Tab binds default to `Ctrl+1..7`; `closeOnRepeat` (bool, default true) is a toggle;
-  close/clear/cycle and all mode binds default to `Keybind.NOT_SET`. Cycle membership is a `Set<ChatTab>`
+- `ChatTabHotkeysConfig.java` — three `@ConfigSection`s ("Tab hotkeys & close", "Clear history", and
+  "Chat input mode"), keybinds. Tab binds default to `Ctrl+1..7`; `closeOnRepeat` (bool, default true)
+  is a toggle; close/clear/cycle and all mode binds default to `Keybind.NOT_SET`. The "Clear history"
+  section holds `clearHistory` ("Clear current tab") plus one bind per clearable tab (`clearPublic`,
+  `clearPrivate`, `clearChannel`, `clearClan`, `clearTrade` → "Clear: X"). `clearHistory` keeps its
+  keyName from v1.0.0 so saved binds survive the rename/move. Cycle membership is a `Set<ChatTab>`
   ("Tabs to cycle", default all seven) and `Set<ChatMode>` ("Modes to cycle", default
   Public/Channel/Clan/Guest — Group left out) — the RuneLite multi-select `Set<Enum>` widget, same as
   World Hopper's region filter. The enums override `toString()` for their list labels.
@@ -28,8 +31,9 @@ Source layout (package `com.chattabhotkeys`):
 
 **Chat Tab Hotkeys** (repo `chat-tab-hotkeys`) — configurable hotkeys for navigating the OSRS chat:
 7 tab binds (All, Game, Public, Private, Channel, Clan, Trade), a cycle-tab bind (steps through a
-configurable subset of tabs), a close-chat toggle (resizable mode), a clear-history bind (channel-type
-tabs only), and chat-input-mode binds (Public/Channel/Clan/Guest clan/Group, plus a Cycle-mode bind
+configurable subset of tabs), a close-chat toggle (resizable mode), clear-history binds (a "current tab"
+bind plus one per channel-type tab, which clears that tab without switching to it), and chat-input-mode
+binds (Public/Channel/Clan/Guest clan/Group, plus a Cycle-mode bind
 over a configurable subset of modes). It only automates UI actions the player can already do by mouse —
 no gameplay automation. Everything is packet-free / client-side.
 
@@ -107,10 +111,13 @@ language level, **no third-party dependencies**.
   the game reverts the mode var, so the cycle keeps `lastCycledMode` and steps *past* Group (rather than
   re-reading the reverted var and retrying Group forever).
 
-- **Clear history is native (no Chat History plugin dependency).** For the active tab's
-  `ChatMessageType`s, drop every `MessageNode` from `client.getChatLineMap()` then
-  `client.runScript(ScriptID.SPLITPM_CHANGED)`. Ported from core `ChatHistoryPlugin` +
-  `ChatboxTab` (the message-type arrays live in `ChatTabs.ChatTab.messageTypes`).
+- **Clear history is native (no Chat History plugin dependency).** `clearTab(ChatTab)` takes the target
+  tab: for its `ChatMessageType`s, drop every `MessageNode` from `client.getChatLineMap()` then
+  `client.runScript(ScriptID.SPLITPM_CHANGED)`. Ported from core `ChatHistoryPlugin` + `ChatboxTab` (the
+  message-type arrays live in `ChatTabs.ChatTab.messageTypes`). The "Clear current tab" bind passes
+  `currentTab()`; the per-tab binds pass a fixed constant, so they clear without touching `CHAT_VIEW`
+  (no switch, works while the chat is collapsed). The single `tab == null || !supportsClear` guard in
+  `clearTab` covers both paths.
 
 - **Silent no-ops, not errors.** Clear on a tab without history (Game/All) → no-op via the
   `supportsClear` flag. Fixed mode → close actions no-op. Not logged in → all actions no-op.

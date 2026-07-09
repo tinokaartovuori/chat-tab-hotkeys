@@ -93,6 +93,11 @@ public class ChatTabHotkeysPlugin extends Plugin
 
 		register(config::closeChat, this::onCloseHotkey);
 		register(config::clearHistory, this::onClearHistoryHotkey);
+		register(config::clearPublic, () -> clearTab(ChatTab.PUBLIC));
+		register(config::clearPrivate, () -> clearTab(ChatTab.PRIVATE));
+		register(config::clearChannel, () -> clearTab(ChatTab.CHANNEL));
+		register(config::clearClan, () -> clearTab(ChatTab.CLAN));
+		register(config::clearTrade, () -> clearTab(ChatTab.TRADE));
 
 		register(config::setModePublic, () -> applyChatMode(ChatMode.PUBLIC));
 		register(config::setModeChannel, () -> applyChatMode(ChatMode.CHANNEL));
@@ -198,9 +203,20 @@ public class ChatTabHotkeysPlugin extends Plugin
 		// Fixed mode: chat can't collapse, so this is a no-op.
 	}
 
+	/** Clears the currently-shown tab (the original "Clear history" bind, now "Clear current tab"). */
 	private void onClearHistoryHotkey()
 	{
-		ChatTab tab = currentTab();
+		clearTab(currentTab());
+	}
+
+	/**
+	 * Clears {@code tab}'s history — used by both the current-tab bind and the per-tab clear binds.
+	 * No-ops when {@code tab} is null (chat collapsed, no current tab) or the tab can't be cleared
+	 * (Game/All). Per-tab callers always pass a non-null clearable constant, so this clears regardless
+	 * of which tab is shown or whether the chat is collapsed.
+	 */
+	private void clearTab(ChatTab tab)
+	{
 		if (tab == null || !tab.supportsClear)
 		{
 			return;

@@ -18,19 +18,27 @@ public interface ChatTabHotkeysConfig extends Config
 	String GROUP = "chattabhotkeys";
 
 	@ConfigSection(
-		name = "Tab hotkeys, close & clear",
-		description = "One hotkey per chat tab, plus closing the chat and clearing a tab's history. Defaults are "
-			+ "Ctrl+1–7; press a tab's hotkey again to close the chat. Bind function keys or modifier combos so "
-			+ "binds don't fire while typing.",
+		name = "Tab hotkeys & close",
+		description = "One hotkey per chat tab, plus closing the chat. Defaults are Ctrl+1–7; press a tab's hotkey "
+			+ "again to close the chat. Bind function keys or modifier combos so binds don't fire while typing.",
 		position = 0
 	)
 	String tabsSection = "tabsSection";
 
 	@ConfigSection(
+		name = "Clear history",
+		description = "Clear a chat tab's history like the right-click 'Clear history' entry. 'Clear current tab' "
+			+ "clears whichever tab is shown; the per-tab binds clear that tab without switching to it. All no-op "
+			+ "on the Game and All tabs.",
+		position = 1
+	)
+	String clearSection = "clearSection";
+
+	@ConfigSection(
 		name = "Chat input mode",
 		description = "Set which channel your typed messages go to, like the right-click 'Set chat mode' on the All tab. "
 			+ "Group only works while you are in a group ironman group.",
-		position = 1
+		position = 2
 	)
 	String modeSection = "modeSection";
 
@@ -111,22 +119,10 @@ public interface ChatTabHotkeysConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "clearHistory",
-		name = "Clear history",
-		description = "Clear the currently-shown tab's history (no-op on the Game and All tabs).",
-		position = 9,
-		section = tabsSection
-	)
-	default Keybind clearHistory()
-	{
-		return Keybind.NOT_SET;
-	}
-
-	@ConfigItem(
 		keyName = "cycleTab",
 		name = "Cycle tab",
 		description = "Step to the next tab in the list below. Wraps around; opens the chat if it is closed.",
-		position = 10,
+		position = 9,
 		section = tabsSection
 	)
 	default Keybind cycleTab()
@@ -139,12 +135,88 @@ public interface ChatTabHotkeysConfig extends Config
 		name = "Tabs to cycle",
 		description = "The tabs the Cycle tab key steps through, in game order. Deselect to leave a tab out; "
 			+ "an empty list disables the cycle.",
-		position = 11,
+		position = 10,
 		section = tabsSection
 	)
 	default Set<ChatTab> cycleTabs()
 	{
 		return EnumSet.allOf(ChatTab.class);
+	}
+
+	// ------------------------------------------------------------------
+	// Clear history — the current tab, plus one bind per clearable tab
+	// (Public, Private, Channel, Clan, Trade). Game/All can't be cleared.
+	// ------------------------------------------------------------------
+	@ConfigItem(
+		keyName = "clearHistory",
+		name = "Clear current tab",
+		description = "Clear the currently-shown tab's history (no-op on the Game and All tabs).",
+		position = 0,
+		section = clearSection
+	)
+	default Keybind clearHistory()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "clearPublic",
+		name = "Clear: Public",
+		description = "Clear the Public tab's history without switching to it.",
+		position = 1,
+		section = clearSection
+	)
+	default Keybind clearPublic()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "clearPrivate",
+		name = "Clear: Private",
+		description = "Clear the Private tab's history without switching to it.",
+		position = 2,
+		section = clearSection
+	)
+	default Keybind clearPrivate()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "clearChannel",
+		name = "Clear: Channel",
+		description = "Clear the Channel (friends chat) tab's history without switching to it.",
+		position = 3,
+		section = clearSection
+	)
+	default Keybind clearChannel()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "clearClan",
+		name = "Clear: Clan",
+		description = "Clear the Clan tab's history without switching to it.",
+		position = 4,
+		section = clearSection
+	)
+	default Keybind clearClan()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "clearTrade",
+		name = "Clear: Trade",
+		description = "Clear the Trade tab's history without switching to it.",
+		position = 5,
+		section = clearSection
+	)
+	default Keybind clearTrade()
+	{
+		return Keybind.NOT_SET;
 	}
 
 	// ------------------------------------------------------------------
