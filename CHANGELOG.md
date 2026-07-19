@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.1.1] - 2026-07-20
+
+### Fixed
+- **Close chat now respects the split friends private chat view.** The Close-chat hotkey (and
+  Close-on-repeat) rebuilds the split private-chat overlay when it collapses or reopens the chatbox, so
+  the overlay hides and returns with the chatbox under the OSRS "Hide private chat when the chatbox is
+  hidden" setting, the same as clicking the chatbox toggle. Before, the overlay kept its old state until
+  something else refreshed the chat, such as the next incoming message, so it hid late or stayed visible.
+  ([#6](https://github.com/tinokaartovuori/chat-tab-hotkeys/issues/6))
+
 ## [1.1.0] - 2026-07-09
 
 ### Added
@@ -44,5 +56,7 @@ Initial Plugin Hub release.
 Everything is packet-free and client-side: tab switching writes `VarClientID.CHAT_VIEW` and runs benign
 redraw procedures; no server-persisted state, no gameplay automation.
 
+[unreleased]: https://github.com/tinokaartovuori/chat-tab-hotkeys/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.1.1
 [1.1.0]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.1.0
 [1.0.0]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.0.0

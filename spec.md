@@ -43,6 +43,10 @@ filter), defaulting to all seven selected. Behaviour:
 ### 3. Close chat — one hotkey, toggles the chatbox
 - Closed → open (to the last shown tab).
 - Open → close.
+- Respects the OSRS "Split friends private chat" view: collapsing or reopening the chatbox rebuilds the
+  split private-chat overlay (via `SPLITPM_CHANGED`), so it hides and returns with the chatbox under the
+  "Hide private chat when the chatbox is hidden" setting, the same as clicking the chatbox toggle. It no
+  longer waits for a later chat message to refresh.
 
 ### 4. Clear history — one bind for the current tab, plus one per tab
 Clears a tab's history, like the right-click "Clear history" entry. Implemented natively (drops the
@@ -62,6 +66,16 @@ Hotkeys for `Public`, `Channel`, `Clan`, `Guest clan`, `Group`, matching the gam
 "Set chat mode" on the All tab. Applied by writing the chat-mode client var and rerunning the
 chatbox-input build script. Group only takes effect while in a group ironman group (the game resets it
 otherwise).
+
+**Ordering invariant (load-bearing — do not reorder).** In `applyChatMode` the mode var
+(`VarClientID.CHATBOX_MODE`, 945) is written **before** `runScript(ScriptID.CHAT_PROMPT_INIT)`, both on
+the client thread. Rerunning that script redraws the input line, and — because a plugin-invoked
+`runScript` fires the same `ScriptPostFired` the game's own script does — it is also what lets input-colour
+plugins such as **Smart Chat Input Color** recolour the input to the new channel: SCIC recolours on
+`ScriptPostFired(CHAT_PROMPT_INIT)` and reads mode var 945, which we have already set by then. Reversing
+the two calls, or moving either off the client thread, would make SCIC read the *previous* mode and leave
+the input showing the old channel's colour. This cross-plugin recolour needs no code of our own; it works
+purely by keeping this order (issue #4).
 
 ### 6. Cycle mode — one hotkey, steps through the chosen input modes
 A `Cycle mode` bind advances to the next input mode in a configurable set (game order, wrapping),
@@ -105,6 +119,7 @@ dropdown lists (the RuneLite `Set<Enum>` widget, as used by World Hopper's filte
 - [ ] 7 tab binds (default `Ctrl+1..7`) + 1 close bind + a "Clear current tab" bind + 5 per-tab "Clear: X" binds (rest unbound), each working.
 - [ ] Same-tab-twice closes the chat when `closeOnRepeat` on; re-shows (no-op) when off.
 - [ ] Close bind toggles closed/open; reopens to the last tab.
+- [ ] With "Split friends private chat" on and "Hide private chat when the chatbox is hidden" on, the close bind hides the split overlay instantly on collapse and restores it instantly on reopen (no delay, no waiting for a message); no-op when either setting is off.
 - [ ] Tab bind while chat closed opens it on that tab.
 - [ ] "Clear current tab" applies to the active tab; the per-tab "Clear: X" binds clear their tab without switching to it; both no-op on tabs that don't offer it (Game/All).
 - [ ] Chat input mode binds set the channel you type into; Cycle mode steps through the selected modes.

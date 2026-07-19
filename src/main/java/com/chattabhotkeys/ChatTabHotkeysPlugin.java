@@ -361,13 +361,23 @@ public class ChatTabHotkeysPlugin extends Plugin
 	/**
 	 * Repaints the chat UI to reflect the CHAT_VIEW varc just written: frame collapse/expand + background
 	 * ({@link #TOPLEVEL_CHATBOX_BACKGROUND}), the tab-button highlight ({@link #REDRAW_CHAT_BUTTONS}), then
-	 * the chat content ({@code ScriptID.BUILD_CHATBOX}). All three are packet-free client-side redraws.
+	 * a chatbox + split private-chat rebuild ({@code ScriptID.SPLITPM_CHANGED}). All three are packet-free
+	 * client-side redraws.
+	 *
+	 * <p>SPLITPM_CHANGED runs both the chatbox rebuild ({@code ~rebuildchatbox}) — a superset of
+	 * {@code BUILD_CHATBOX} — and the split private-message overlay rebuild ({@code ~rebuildpmbox}), which
+	 * BUILD_CHATBOX alone never runs. Only the pmbox rebuild re-evaluates the overlay's hide/show guard
+	 * (split-chat enabled AND (CHAT_VIEW != {@value #CHAT_VIEW_CLOSED} OR the "hide private chat when the
+	 * chatbox is hidden" setting is off)). Without it a collapse/reopen wrote CHAT_VIEW but left the split
+	 * overlay stale until some later event (an incoming message, the redraw timer) happened to rebuild it —
+	 * the delayed, inconsistent hide the native mouse toggle never has (it ends with the same pmbox
+	 * rebuild). The proc self-gates on the split-chat vars, so it's a no-op when split chat is off.
 	 */
 	private void redrawChat()
 	{
 		client.runScript(TOPLEVEL_CHATBOX_BACKGROUND);
 		client.runScript(REDRAW_CHAT_BUTTONS);
-		client.runScript(ScriptID.BUILD_CHATBOX);
+		client.runScript(ScriptID.SPLITPM_CHANGED);
 	}
 
 	private void register(Supplier<Keybind> keybind, Runnable action)

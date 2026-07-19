@@ -91,9 +91,16 @@ language level, **no third-party dependencies**.
   for the active tab), then `client.runScript(183 /*chat_alert_set*/, tab.tabIndex, 0)` to clear the
   tab's unread flash, then `redrawChat()`. `redrawChat()` runs three benign client-side repaint procs —
   `runScript(923 /*toplevel_chatbox_background*/)`, `runScript(178 /*redraw_chat_buttons*/)`, and
-  `runScript(ScriptID.BUILD_CHATBOX)` — because `setVarcIntValue` alone doesn't repaint. None of 178 /
-  923 / 183 have a `ScriptID` constant, hence the literals; all are pure redraw procs (no packet, no
-  server-persisted state). The earlier `runScript(175)` leaf-script call and the
+  `runScript(ScriptID.SPLITPM_CHANGED)` — because `setVarcIntValue` alone doesn't repaint. The third
+  proc is SPLITPM_CHANGED (not `BUILD_CHATBOX`) because it runs both the chatbox rebuild
+  (`~rebuildchatbox`, a superset of BUILD_CHATBOX) **and** the split private-chat overlay rebuild
+  (`~rebuildpmbox`), which BUILD_CHATBOX alone never runs. Only that pmbox rebuild re-evaluates the
+  split-chat hide/show guard (`CHAT_VIEW == 1337` + the "hide private chat when the chatbox is hidden"
+  setting), so without it a collapse/reopen left the split overlay stale until a later event (an
+  incoming message, the redraw timer) rebuilt it. The native mouse toggle runs the pmbox rebuild, so it
+  never lagged (issue #6). None of 178 / 923 / 183 have a `ScriptID` constant, hence the literals;
+  all are pure redraw procs (no packet, no server-persisted state). The earlier `runScript(175)`
+  leaf-script call and the
   `replayWidgetOp`/`replayTabOp` primitive (`getOnOpListener()` + `createScriptEventBuilder`) — the
   generic "click any widget" call the Plugin Hub rejected (PR #13356) — are both **removed**.
 
