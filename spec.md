@@ -67,6 +67,16 @@ Hotkeys for `Public`, `Channel`, `Clan`, `Guest clan`, `Group`, matching the gam
 chatbox-input build script. Group only takes effect while in a group ironman group (the game resets it
 otherwise).
 
+**Ordering invariant (load-bearing — do not reorder).** In `applyChatMode` the mode var
+(`VarClientID.CHATBOX_MODE`, 945) is written **before** `runScript(ScriptID.CHAT_PROMPT_INIT)`, both on
+the client thread. Rerunning that script redraws the input line, and — because a plugin-invoked
+`runScript` fires the same `ScriptPostFired` the game's own script does — it is also what lets input-colour
+plugins such as **Smart Chat Input Color** recolour the input to the new channel: SCIC recolours on
+`ScriptPostFired(CHAT_PROMPT_INIT)` and reads mode var 945, which we have already set by then. Reversing
+the two calls, or moving either off the client thread, would make SCIC read the *previous* mode and leave
+the input showing the old channel's colour. This cross-plugin recolour needs no code of our own; it works
+purely by keeping this order (issue #4).
+
 ### 6. Cycle mode — one hotkey, steps through the chosen input modes
 A `Cycle mode` bind advances to the next input mode in a configurable set (game order, wrapping),
 reading the current mode from the game var. The set is a multi-select list, **"Modes to cycle"** (a
