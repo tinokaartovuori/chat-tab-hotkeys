@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-20
+
 ### Fixed
 - **Close chat now respects the split friends private chat view.** The Close-chat hotkey (and
   Close-on-repeat) rebuilds the split private-chat overlay when it collapses or reopens the chatbox, so
@@ -54,6 +56,7 @@ Initial Plugin Hub release.
 Everything is packet-free and client-side: tab switching writes `VarClientID.CHAT_VIEW` and runs benign
 redraw procedures; no server-persisted state, no gameplay automation.
 
-[unreleased]: https://github.com/tinokaartovuori/chat-tab-hotkeys/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/tinokaartovuori/chat-tab-hotkeys/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.1.1
 [1.1.0]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.1.0
 [1.0.0]: https://github.com/tinokaartovuori/chat-tab-hotkeys/releases/tag/v1.0.0
