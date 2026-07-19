@@ -138,9 +138,13 @@ language level, **no third-party dependencies**.
 ## Releasing
 
 The Plugin Hub distributes plugins by **pinning a commit hash**, not by git tags or GitHub releases:
-the hub repo holds `plugins/chat-tab-hotkeys` with `repository=` + `commit=<40-char hash>`, and a
-"release" is a PR there that bumps `commit=`. The `version=` in `runelite-plugin.properties` is
-optional (the commit is used if absent) — treat it as the user-visible version label. Because
+the hub repo holds `plugins/chat-tab-hotkeys` with `repository=` + `commit=<40-char hash>` (+ our
+`authors=`), and a "release" is a PR there that bumps `commit=`. **The hub commit descriptor accepts
+only `repository` / `commit` / `authors` — never a `version=` key.** The packager reads the version
+from the plugin's own `runelite-plugin.properties`; adding `version=` to the hub descriptor fails the
+build with `unexpected key in commit descriptor` (this sank hub PR #14056 for v1.1.1). The `version=`
+in `runelite-plugin.properties` is optional (the commit is used if absent) — treat it as the
+user-visible version label. Because
 `build=standard`, the hub **replaces `build.gradle`/`settings.gradle`** at build time, so their
 contents (and the `rl` wrapper) matter only for local dev, never for the hub build.
 
@@ -170,8 +174,9 @@ Release steps (SemVer: MAJOR breaking / MINOR feature / PATCH fix):
 3. Open a PR `release/vX.Y.Z` → `main` and merge it **with a merge commit (not squash/rebase)**, so the
    tagged commit stays reachable on `main`. Optionally create a GitHub Release from the tag with the
    changelog section as notes.
-4. Point the hub manifest's `commit=` (and `version=`) at the tagged release commit via a PR to
-   `runelite/plugin-hub`. **While the plugin's first submission PR is still unreviewed, update that same
+4. Point the hub manifest's `commit=` at the tagged release commit via a PR to
+   `runelite/plugin-hub` (only `commit=` changes — do **not** add a `version=` line; it fails the
+   build). **While the plugin's first submission PR is still unreviewed, update that same
    open PR** (push to its head branch) instead of opening a new one — the plugin then first publishes at
    the newer version, skipping the unpublished earlier one. Once the plugin is live on the hub, each
    later version is its own hub PR that bumps `commit=`.
